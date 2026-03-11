@@ -37,6 +37,8 @@
   .section-fade { opacity: 0; animation: fadeIn 0.4s ease forwards; }
   @keyframes fadeIn { to { opacity: 1; } }
   .refresh-indicator { transition: opacity 0.3s ease; }
+  .notification-dot { position: absolute; top: -4px; right: -4px; width: 12px; height: 12px; border-radius: 50%; background: #a855f7; border: 2px solid #0a0a0f; animation: notifPulse 2s ease-in-out infinite; }
+  @keyframes notifPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(168,85,247,0.4); } 50% { box-shadow: 0 0 0 6px rgba(168,85,247,0); } }
 </style>
 </head>
 <body class="min-h-screen">
@@ -337,8 +339,27 @@ const DATA = {
 // RENDER FUNCTIONS
 // ============================================================
 
+function getLastSeenStatuses() {
+  try { return JSON.parse(localStorage.getItem('agentLastSeenStatus') || '{}'); } catch { return {}; }
+}
+
+function saveLastSeenStatuses() {
+  const statuses = {};
+  DATA.agents.forEach(a => { statuses[a.id] = a.status; });
+  localStorage.setItem('agentLastSeenStatus', JSON.stringify(statuses));
+}
+
+function dismissNotification(agentId) {
+  const dot = document.querySelector(`[data-notif-agent="${agentId}"]`);
+  if (dot) dot.remove();
+  const saved = getLastSeenStatuses();
+  const agent = DATA.agents.find(a => a.id === agentId);
+  if (agent) { saved[agentId] = agent.status; localStorage.setItem('agentLastSeenStatus', JSON.stringify(saved)); }
+}
+
 function renderAgentCards() {
   const container = document.getElementById('agent-cards');
+  const lastSeen = getLastSeenStatuses();
   container.innerHTML = DATA.agents.map(a => {
     const statusColors = {
       active: 'bg-green-500 pulse-green',
@@ -348,9 +369,12 @@ function renderAgentCards() {
     };
     const borderColors = { active: 'border-green-500/20', warning: 'border-yellow-500/20', error: 'border-red-500/20', offline: 'border-gray-700' };
     const glowClass = { active: 'glow-green', warning: 'glow-yellow', error: 'glow-red', offline: '' };
+    const hasNotif = (a.id in lastSeen) && lastSeen[a.id] !== a.status;
+    const notifDot = hasNotif ? `<span class="notification-dot" data-notif-agent="${a.id}"></span>` : '';
 
     return `
-      <div class="glass rounded-xl p-5 ${glowClass[a.status]} border ${borderColors[a.status]}">
+      <div class="glass rounded-xl p-5 ${glowClass[a.status]} border ${borderColors[a.status]} relative cursor-pointer" onclick="dismissNotification('${a.id}')">
+        ${notifDot}
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center gap-3">
             <div class="agent-avatar bg-${a.color}-600/20">${a.emoji}</div>
@@ -755,6 +779,11 @@ function renderAll(data) {
 
   if (isRefresh) {
     fadeInChildren(document.getElementById('health-checks'));
+  }
+
+  // On first visit, seed localStorage so future changes show dots
+  if (!localStorage.getItem('agentLastSeenStatus')) {
+    saveLastSeenStatuses();
   }
 }
 
