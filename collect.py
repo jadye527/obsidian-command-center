@@ -11,10 +11,12 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
-WORKSPACE = os.path.expanduser("~/openclaw-workspace")
+WORKSPACE = os.environ.get("AGENT_WORKSPACE", os.path.expanduser("~/workspace"))
 DASHBOARD_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT = os.path.join(DASHBOARD_DIR, "dashboard-state.json")
 ACTIVITY_LOG = os.path.join(DASHBOARD_DIR, "activity-log.jsonl")
+TRADE_DB = os.environ.get("TRADE_DB_PATH", os.path.join(WORKSPACE, "trading-bot/data/trades.db"))
+TMUX_SOCK = os.environ.get("TMUX_SOCKET", os.path.expanduser("~/.tmux/default"))
 
 
 def run(cmd, timeout=5):
@@ -30,12 +32,12 @@ def check_process(pattern):
 
 
 def check_tmux_session(name):
-    out = run(f"tmux -S ~/.tmux/sock has-session -t {name} 2>/dev/null && echo ALIVE || echo DEAD")
+    out = run(f"tmux -S {TMUX_SOCK} has-session -t {name} 2>/dev/null && echo ALIVE || echo DEAD")
     return out == "ALIVE"
 
 
 def get_tmux_sessions():
-    out = run("tmux -S ~/.tmux/sock list-sessions 2>/dev/null")
+    out = run(f"tmux -S {TMUX_SOCK} list-sessions 2>/dev/null")
     if not out:
         return []
     sessions = []
@@ -56,7 +58,7 @@ def read_prd_progress(prd_path):
 
 
 def get_paper_trade_stats():
-    db_path = os.path.join(WORKSPACE, "polymarket-trading-bot/data/paper_trades.db")
+    db_path = TRADE_DB
     try:
         conn = sqlite3.connect(db_path)
         c = conn.cursor()
@@ -126,17 +128,16 @@ def collect():
         "lastAction": f"tmux: {ralph_sessions[0]}" if ralph_sessions else "No active session"
     }
 
-    # Process health
-    health = [
-        {"name": "METAR Daemon", "status": "healthy" if check_process("metar_aggressive_daemon") else "error",
-         "detail": "Running" if check_process("metar_aggressive_daemon") else "NOT RUNNING"},
-        {"name": "5-Min Monitor", "status": "healthy" if check_process("five_min_monitor") else "error",
-         "detail": "Running" if check_process("five_min_monitor") else "NOT RUNNING"},
-        {"name": "Tweet Drip", "status": "healthy" if check_process("xqueue next") else "warning",
-         "detail": "Running" if check_process("xqueue next") else "Stopped"},
-        {"name": "OpenClaw Gateway", "status": "healthy" if check_process("openclaw-gateway") else "error",
-         "detail": "Running" if check_process("openclaw-gateway") else "NOT RUNNING"},
-    ]
+    # Process health — process patterns loaded from env to avoid leaking infra details
+    health_checks = json.loads(os.environ.get("HEALTH_CHECKS", "[]"))
+    health = []
+    for hc in health_checks:
+        running = check_process(hc["pattern"])
+        health.append({
+            "name": hc["name"],
+            "status": "healthy" if running else hc.get("fail_status", "error"),
+            "detail": "Running" if running else "Not running",
+        })
 
     # Ralph tmux
     for s in ralph_sessions:
@@ -146,7 +147,8 @@ def collect():
     trades = get_paper_trade_stats()
 
     # PRD progress
-    growth_kit_prd = read_prd_progress(os.path.expanduser("~/obsidian-growth-kit/PRD.md"))
+    prd_path = os.environ.get("PRD_PATH", os.path.join(WORKSPACE, "growth-kit/PRD.md"))
+    growth_kit_prd = read_prd_progress(prd_path)
 
     # Costs (static for now, can be updated manually in cost-tracker.json)
     cost_file = os.path.join(DASHBOARD_DIR, "cost-tracker.json")

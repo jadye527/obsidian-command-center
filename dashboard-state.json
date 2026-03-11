@@ -4,7 +4,7 @@
     {
       "id": "obsidian",
       "status": "offline",
-      "lastAction": "Unknown",
+      "lastAction": "",
       "name": "Obsidian",
       "role": "CEO / Strategy",
       "emoji": "\ud83e\udde0",
@@ -14,7 +14,7 @@
     {
       "id": "sentinel",
       "status": "offline",
-      "lastAction": "Unknown",
+      "lastAction": "",
       "name": "Sentinel",
       "role": "Trading Ops",
       "emoji": "\ud83d\udee1\ufe0f",
@@ -29,65 +29,18 @@
       "model": "Codex (GPT)",
       "color": "green",
       "status": "active",
-      "lastAction": "tmux: ralph-dashboard"
+      "lastAction": ""
     }
   ],
-  "costs": {
-    "claudeMax": {
-      "label": "Claude Max",
-      "amount": 200,
-      "icon": "\ud83e\udde0"
-    },
-    "codex": {
-      "label": "Codex / ChatGPT",
-      "amount": 20,
-      "icon": "\ud83d\udd28"
-    },
-    "haiku": {
-      "label": "Haiku Crons",
-      "amount": 3.2,
-      "icon": "\u26a1"
-    },
-    "xApi": {
-      "label": "X API",
-      "amount": 5.0,
-      "icon": "\ud83d\udc26"
-    }
-  },
-  "budget": 250,
-  "health": [
-    {
-      "name": "METAR Daemon",
-      "status": "healthy",
-      "detail": "Running"
-    },
-    {
-      "name": "5-Min Monitor",
-      "status": "healthy",
-      "detail": "Running"
-    },
-    {
-      "name": "Tweet Drip",
-      "status": "healthy",
-      "detail": "Running"
-    },
-    {
-      "name": "OpenClaw Gateway",
-      "status": "healthy",
-      "detail": "Running"
-    },
-    {
-      "name": "Ralph (ralph-dashboard)",
-      "status": "healthy",
-      "detail": "Active in tmux"
-    }
-  ],
+  "costs": {},
+  "budget": 0,
+  "health": [],
   "trading": {
     "total": 11,
     "resolved": 11,
     "wins": 3,
     "winRate": 27,
-    "pnl": -50.05,
+    "pnl": 0,
     "lastTrade": "2026-02-20T12:22:24.752571"
   },
   "prdProgress": {
@@ -105,24 +58,5 @@
     }
   ],
   "tasks": [],
-  "delegations": [
-    {
-      "from": "obsidian",
-      "to": "ralph",
-      "task": "Dashboard improvements",
-      "status": "active"
-    },
-    {
-      "from": "obsidian",
-      "to": "sentinel",
-      "task": "Market scanning & trading",
-      "status": "active"
-    },
-    {
-      "from": "jason",
-      "to": "obsidian",
-      "task": "Company operations",
-      "status": "active"
-    }
-  ]
+  "delegations": []
 }
