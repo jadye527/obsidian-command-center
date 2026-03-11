@@ -1,5 +1,5 @@
 {
-  "updated": "2026-03-11T22:30:01.665657+00:00",
+  "updated": "2026-03-11T22:45:01.668264+00:00",
   "agents": [
     {
       "id": "obsidian",
@@ -11,7 +11,7 @@
       "model": "Claude Opus",
       "color": "purple",
       "uptime": "83%",
-      "lastSeen": "2026-03-11T22:29:29.459697+00:00"
+      "lastSeen": "2026-03-11T22:43:15.101349+00:00"
     },
     {
       "id": "sentinel",
@@ -116,7 +116,7 @@
   },
   "timeline": [
     {
-      "time": "10:30 PM",
+      "time": "10:45 PM",
       "agent": "obsidian",
       "action": "Dashboard data collected"
     }
