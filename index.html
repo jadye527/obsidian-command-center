@@ -158,7 +158,15 @@
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     <!-- Timeline -->
     <div>
-      <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Activity Feed</h2>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Activity Feed</h2>
+        <div class="flex gap-1" id="timeline-filters">
+          <button onclick="filterTimeline('all')" data-filter="all" class="timeline-filter-btn px-2 py-1 rounded text-xs font-medium bg-purple-600/30 text-purple-300 border border-purple-500/30">All</button>
+          <button onclick="filterTimeline('obsidian')" data-filter="obsidian" class="timeline-filter-btn px-2 py-1 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-white/5 hover:border-purple-500/20">Obsidian</button>
+          <button onclick="filterTimeline('sentinel')" data-filter="sentinel" class="timeline-filter-btn px-2 py-1 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-white/5 hover:border-red-500/20">Sentinel</button>
+          <button onclick="filterTimeline('ralph')" data-filter="ralph" class="timeline-filter-btn px-2 py-1 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-white/5 hover:border-green-500/20">Ralph</button>
+        </div>
+      </div>
       <div class="glass rounded-xl p-4 max-h-96 overflow-y-auto" id="timeline"></div>
     </div>
     <!-- Delegation Map -->
@@ -415,12 +423,23 @@ function toggleTask(card) {
   card.classList.toggle('expanded');
 }
 
+let activeTimelineFilter = 'all';
+
 function renderTimeline() {
   const container = document.getElementById('timeline');
   const agentEmoji = {};
   DATA.agents.forEach(a => agentEmoji[a.id] = a.emoji);
 
-  container.innerHTML = DATA.timeline.map(t => `
+  const items = activeTimelineFilter === 'all'
+    ? DATA.timeline
+    : DATA.timeline.filter(t => t.agent === activeTimelineFilter);
+
+  if (items.length === 0) {
+    container.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">No activity for this agent.</p>';
+    return;
+  }
+
+  container.innerHTML = items.map(t => `
     <div class="timeline-item relative pl-10 pb-4">
       <div class="absolute left-0 top-1 w-8 h-8 rounded-lg bg-purple-600/10 flex items-center justify-center text-sm">
         ${agentEmoji[t.agent] || '\u{1f464}'}
@@ -429,6 +448,23 @@ function renderTimeline() {
       <p class="text-xs text-gray-500 mono mt-0.5">${t.time} — ${t.agent}</p>
     </div>
   `).join('');
+}
+
+function filterTimeline(agent) {
+  activeTimelineFilter = agent;
+
+  const agentColors = { obsidian: 'purple', sentinel: 'red', ralph: 'green' };
+  document.querySelectorAll('.timeline-filter-btn').forEach(btn => {
+    const f = btn.getAttribute('data-filter');
+    if (f === agent) {
+      const color = agentColors[f] || 'purple';
+      btn.className = `timeline-filter-btn px-2 py-1 rounded text-xs font-medium bg-${color}-600/30 text-${color}-300 border border-${color}-500/30`;
+    } else {
+      btn.className = 'timeline-filter-btn px-2 py-1 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-white/5 hover:border-purple-500/20';
+    }
+  });
+
+  renderTimeline();
 }
 
 function renderDelegations() {
