@@ -1,10 +1,10 @@
 {
-  "updated": "2026-03-11T06:30:01.232705+00:00",
+  "updated": "2026-03-11T06:45:01.678702+00:00",
   "agents": [
     {
       "id": "obsidian",
       "status": "offline",
-      "lastAction": "",
+      "lastAction": "Unknown",
       "name": "Obsidian",
       "role": "CEO / Strategy",
       "emoji": "\ud83e\udde0",
@@ -14,7 +14,7 @@
     {
       "id": "sentinel",
       "status": "offline",
-      "lastAction": "",
+      "lastAction": "Unknown",
       "name": "Sentinel",
       "role": "Trading Ops",
       "emoji": "\ud83d\udee1\ufe0f",
@@ -28,35 +28,75 @@
       "emoji": "\ud83d\udd28",
       "model": "Codex (GPT)",
       "color": "green",
-      "status": "active",
-      "lastAction": ""
+      "status": "offline",
+      "lastAction": "No active session"
     }
   ],
-  "costs": {},
-  "budget": 0,
+  "costs": {
+    "claudeMax": {
+      "label": "Claude Max",
+      "amount": 200,
+      "icon": "\ud83e\udde0"
+    },
+    "codex": {
+      "label": "Codex / ChatGPT",
+      "amount": 20,
+      "icon": "\ud83d\udd28"
+    },
+    "haiku": {
+      "label": "Haiku Crons",
+      "amount": 3.2,
+      "icon": "\u26a1"
+    },
+    "xApi": {
+      "label": "X API",
+      "amount": 5.0,
+      "icon": "\ud83d\udc26"
+    }
+  },
+  "budget": 250,
   "health": [],
   "trading": {
-    "total": 11,
-    "resolved": 11,
-    "wins": 3,
-    "winRate": 27,
+    "total": 0,
+    "resolved": 0,
+    "wins": 0,
+    "winRate": 0,
     "pnl": 0,
-    "lastTrade": "2026-02-20T12:22:24.752571"
+    "lastTrade": "unknown"
   },
   "prdProgress": {
     "growthKit": {
-      "done": 15,
-      "total": 15,
-      "pct": 100
+      "done": 0,
+      "total": 0,
+      "pct": 0
     }
   },
   "timeline": [
     {
-      "time": "06:30 AM",
+      "time": "06:45 AM",
       "agent": "obsidian",
       "action": "Dashboard data collected"
     }
   ],
   "tasks": [],
-  "delegations": []
+  "delegations": [
+    {
+      "from": "obsidian",
+      "to": "ralph",
+      "task": "Dashboard improvements",
+      "status": "idle"
+    },
+    {
+      "from": "obsidian",
+      "to": "sentinel",
+      "task": "Market scanning & trading",
+      "status": "active"
+    },
+    {
+      "from": "jason",
+      "to": "obsidian",
+      "task": "Company operations",
+      "status": "active"
+    }
+  ]
 }
