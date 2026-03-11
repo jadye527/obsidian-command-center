@@ -75,6 +75,35 @@
   </div>
 </section>
 
+<!-- Trading Stats -->
+<section class="max-w-7xl mx-auto px-6 py-4">
+  <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Trading Performance</h2>
+  <div class="glass rounded-xl p-5 glow-red" id="trading-panel">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div class="text-center">
+        <p class="text-2xl font-bold mono" id="trading-winrate">—</p>
+        <p class="text-xs text-gray-500 mt-1">Win Rate</p>
+      </div>
+      <div class="text-center">
+        <p class="text-2xl font-bold mono" id="trading-pnl">—</p>
+        <p class="text-xs text-gray-500 mt-1">P&amp;L</p>
+      </div>
+      <div class="text-center">
+        <p class="text-2xl font-bold mono text-white" id="trading-total">—</p>
+        <p class="text-xs text-gray-500 mt-1">Total Trades</p>
+      </div>
+      <div class="text-center">
+        <p class="text-2xl font-bold mono text-white" id="trading-last">—</p>
+        <p class="text-xs text-gray-500 mt-1">Last Trade</p>
+      </div>
+    </div>
+    <div class="mt-4 pt-4 border-t border-white/5 flex items-center justify-between text-xs text-gray-500">
+      <span id="trading-record"></span>
+      <span id="trading-resolved"></span>
+    </div>
+  </div>
+</section>
+
 <!-- Task Board (Kanban) -->
 <section class="max-w-7xl mx-auto px-6 py-6">
   <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Task Board</h2>
@@ -200,6 +229,15 @@ const DATA = {
     xApi: { label: "X API", amount: 5.00, icon: "\u{1f426}" }
   },
   budget: 250,
+
+  trading: {
+    total: 11,
+    resolved: 11,
+    wins: 3,
+    winRate: 27,
+    pnl: -50.05,
+    lastTrade: "2026-02-20T12:22:24.752571"
+  },
 
   tasks: [
     { id: 1, title: "Expand Growth Kit for businesses/creators", agent: "obsidian", status: "backlog", priority: "medium" },
@@ -384,6 +422,29 @@ function renderDelegations() {
   `).join('');
 }
 
+function renderTrading() {
+  const t = DATA.trading;
+  if (!t) { document.getElementById('trading-panel').style.display = 'none'; return; }
+
+  const winColor = t.winRate >= 50 ? 'text-green-400' : 'text-red-400';
+  const pnlColor = t.pnl >= 0 ? 'text-green-400' : 'text-red-400';
+  const pnlSign = t.pnl >= 0 ? '+' : '';
+
+  document.getElementById('trading-winrate').className = `text-2xl font-bold mono ${winColor}`;
+  document.getElementById('trading-winrate').textContent = `${t.winRate}%`;
+
+  document.getElementById('trading-pnl').className = `text-2xl font-bold mono ${pnlColor}`;
+  document.getElementById('trading-pnl').textContent = t.pnl >= 0 ? `+$${t.pnl.toFixed(2)}` : `-$${Math.abs(t.pnl).toFixed(2)}`;
+
+  document.getElementById('trading-total').textContent = t.total;
+
+  const lastDate = new Date(t.lastTrade);
+  document.getElementById('trading-last').textContent = lastDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  document.getElementById('trading-record').textContent = `Record: ${t.wins}W / ${t.total - t.wins}L`;
+  document.getElementById('trading-resolved').textContent = `${t.resolved} of ${t.total} resolved`;
+}
+
 function renderHealth() {
   const container = document.getElementById('health-checks');
   const statusConfig = {
@@ -418,6 +479,7 @@ function renderAll(data) {
   renderTasks();
   renderTimeline();
   renderDelegations();
+  renderTrading();
   renderHealth();
 }
 
