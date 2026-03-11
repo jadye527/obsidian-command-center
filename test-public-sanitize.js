@@ -35,23 +35,39 @@ function sanitizeTrading(t) {
   };
 }
 
+function sanitizeCosts(costs, budget) {
+  if (!costs || Object.keys(costs).length === 0) return null;
+  const total = Object.values(costs).reduce((s, c) => s + (c.amount || 0), 0);
+  return { total, budget: budget || 0 };
+}
+
 function sanitizeData(raw) {
   return {
     updated: raw.updated,
     agents: (raw.agents || []).map(sanitizeAgent),
     trading: sanitizeTrading(raw.trading),
     prdProgress: raw.prdProgress || {},
+    costs: sanitizeCosts(raw.costs, raw.budget),
     tasks: (raw.tasks || []).map(t => ({
       id: t.id,
       title: t.title,
-      agent: t.agent,
       status: t.status,
-      priority: t.priority,
     })),
     timeline: (raw.timeline || []).map(t => ({
       time: t.time,
       agent: t.agent,
       action: t.action,
+    })),
+    health: (raw.health || []).map(h => ({
+      name: h.name,
+      status: h.status,
+      detail: h.detail,
+    })),
+    delegations: (raw.delegations || []).map(d => ({
+      from: d.from,
+      to: d.to,
+      task: d.task,
+      status: d.status,
     })),
   };
 }
@@ -139,19 +155,28 @@ assert(sanitizeTrading(null) === null, 'returns null for null input');
 assert(sanitizeTrading(undefined) === null, 'returns null for undefined input');
 
 // ============================================================
-console.log('\n=== Test: sanitizeData strips top-level sensitive sections ===');
+console.log('\n=== Test: sanitizeCosts keeps totals only ===');
+
+const costs = sanitizeCosts(rawData.costs, rawData.budget);
+
+assert(costs.total === 220, 'computes correct total');
+assert(costs.budget === 250, 'preserves budget');
+assert(costs.claudeMax === undefined, 'strips individual cost line items');
+assert(costs.codex === undefined, 'strips individual cost line items (codex)');
+
+// ============================================================
+console.log('\n=== Test: sanitizeCosts handles empty/null ===');
+
+assert(sanitizeCosts(null, 250) === null, 'returns null for null costs');
+assert(sanitizeCosts({}, 250) === null, 'returns null for empty costs');
+assert(sanitizeCosts(undefined, 250) === null, 'returns null for undefined costs');
+
+// ============================================================
+console.log('\n=== Test: sanitizeData keeps allowed sections ===');
 
 const clean = sanitizeData(rawData);
 
 assert(clean.updated === rawData.updated, 'preserves updated timestamp');
-assert(clean.costs === undefined, 'strips costs');
-assert(clean.budget === undefined, 'strips budget');
-assert(clean.health === undefined, 'strips health');
-assert(clean.delegations === undefined, 'strips delegations');
-
-// ============================================================
-console.log('\n=== Test: sanitizeData preserves safe sections ===');
-
 assert(Array.isArray(clean.agents), 'agents is array');
 assert(clean.agents.length === 2, 'preserves agent count');
 assert(clean.trading !== null, 'preserves trading');
@@ -160,15 +185,44 @@ assert(Object.keys(clean.prdProgress).length === 1, 'preserves prdProgress');
 assert(clean.prdProgress.growthKit.pct === 100, 'preserves prdProgress data');
 
 // ============================================================
-console.log('\n=== Test: sanitizeData strips task descriptions ===');
+console.log('\n=== Test: sanitizeData costs are totals only ===');
+
+assert(clean.costs !== null, 'costs present');
+assert(clean.costs.total === 220, 'costs total correct');
+assert(clean.costs.budget === 250, 'costs budget correct');
+assert(clean.budget === undefined, 'top-level budget not exposed');
+
+// ============================================================
+console.log('\n=== Test: sanitizeData preserves health ===');
+
+assert(Array.isArray(clean.health), 'health is array');
+assert(clean.health.length === 2, 'preserves health count');
+assert(clean.health[0].name === 'METAR Daemon', 'preserves health name');
+assert(clean.health[0].status === 'healthy', 'preserves health status');
+assert(clean.health[0].detail === 'PID active', 'preserves health detail');
+
+// ============================================================
+console.log('\n=== Test: sanitizeData preserves delegations ===');
+
+assert(Array.isArray(clean.delegations), 'delegations is array');
+assert(clean.delegations.length === 2, 'preserves delegation count');
+assert(clean.delegations[0].from === 'jason', 'preserves delegation from');
+assert(clean.delegations[0].to === 'obsidian', 'preserves delegation to');
+assert(clean.delegations[0].task === 'Build agent dashboard', 'preserves delegation task');
+assert(clean.delegations[0].status === 'active', 'preserves delegation status');
+
+// ============================================================
+console.log('\n=== Test: sanitizeData tasks are titles only ===');
 
 assert(clean.tasks.length === 2, 'preserves task count');
 assert(clean.tasks[0].title === 'Add Stripe checkout', 'preserves task title');
-assert(clean.tasks[0].agent === 'obsidian', 'preserves task agent');
 assert(clean.tasks[0].status === 'backlog', 'preserves task status');
-assert(clean.tasks[0].priority === 'high', 'preserves task priority');
+assert(clean.tasks[0].id === 1, 'preserves task id');
+assert(clean.tasks[0].agent === undefined, 'strips task agent');
+assert(clean.tasks[0].priority === undefined, 'strips task priority');
 assert(clean.tasks[0].description === undefined, 'strips task description');
-assert(clean.tasks[1].description === undefined, 'strips second task description');
+assert(clean.tasks[1].agent === undefined, 'strips second task agent');
+assert(clean.tasks[1].priority === undefined, 'strips second task priority');
 
 // ============================================================
 console.log('\n=== Test: sanitizeData preserves timeline ===');
@@ -186,6 +240,9 @@ assert(minimal.agents.length === 0, 'empty agents for missing');
 assert(minimal.tasks.length === 0, 'empty tasks for missing');
 assert(minimal.timeline.length === 0, 'empty timeline for missing');
 assert(minimal.trading === null, 'null trading for missing');
+assert(minimal.costs === null, 'null costs for missing');
+assert(minimal.health.length === 0, 'empty health for missing');
+assert(minimal.delegations.length === 0, 'empty delegations for missing');
 assert(Object.keys(minimal.prdProgress).length === 0, 'empty prdProgress for missing');
 
 // ============================================================
@@ -194,18 +251,20 @@ console.log('\n=== Test: public.html file content checks ===');
 const fs = require('fs');
 const html = fs.readFileSync(__dirname + '/public.html', 'utf8');
 
-assert(!html.includes('Monthly Cost Tracker'), 'no cost tracker section');
-assert(!html.includes('System Health'), 'no system health section');
-assert(!html.includes('Delegation Map'), 'no delegation map section');
+assert(html.includes('Monthly Cost Summary'), 'has cost summary section');
+assert(!html.includes('cost-breakdown'), 'no per-service cost breakdown');
+assert(html.includes('System Health'), 'has system health section');
+assert(html.includes('Delegation Map'), 'has delegation map section');
 assert(!html.includes('localStorage'), 'no localStorage usage');
 assert(!html.includes('notification-dot'), 'no notification dot logic');
 assert(html.includes('Public View'), 'has Public View badge');
 assert(html.includes('sanitizeData'), 'uses sanitizeData function');
 assert(html.includes('sanitizeAgent'), 'uses sanitizeAgent function');
 assert(html.includes('sanitizeTrading'), 'uses sanitizeTrading function');
-assert(!html.includes('renderDelegations'), 'no renderDelegations function');
-assert(!html.includes('renderHealth'), 'no renderHealth function');
-assert(!html.includes('renderCosts'), 'no renderCosts function');
+assert(html.includes('sanitizeCosts'), 'uses sanitizeCosts function');
+assert(html.includes('renderDelegations'), 'has renderDelegations function');
+assert(html.includes('renderHealth'), 'has renderHealth function');
+assert(html.includes('renderCosts'), 'has renderCosts function');
 assert(html.includes('dashboard-state.json'), 'fetches live data');
 assert(html.includes('fetchAndRender'), 'has auto-refresh');
 

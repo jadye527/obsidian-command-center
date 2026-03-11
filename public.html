@@ -76,6 +76,25 @@
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="agent-cards"></div>
 </section>
 
+<!-- Cost Summary (totals only — no line items) -->
+<section class="max-w-7xl mx-auto px-6 py-4" id="cost-section">
+  <div class="glass rounded-xl p-5 glow-purple">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Monthly Cost Summary</h2>
+      <span class="mono text-2xl font-bold text-white" id="total-cost"></span>
+    </div>
+    <div>
+      <div class="flex justify-between text-xs text-gray-500">
+        <span id="budget-label"></span>
+        <span id="budget-pct"></span>
+      </div>
+      <div class="w-full h-2 bg-gray-800 rounded-full mt-1 overflow-hidden">
+        <div class="h-full rounded-full transition-all duration-500" id="budget-bar"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- Trading Stats (sanitized — no P&L) -->
 <section class="max-w-7xl mx-auto px-6 py-4">
   <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Trading Performance</h2>
@@ -146,18 +165,34 @@
   </div>
 </section>
 
-<!-- Activity Timeline (no delegation map) -->
+<!-- Activity Timeline + Delegation Map -->
 <section class="max-w-7xl mx-auto px-6 py-6">
-  <div class="flex items-center justify-between mb-4">
-    <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Activity Feed</h2>
-    <div class="flex gap-1" id="timeline-filters">
-      <button onclick="filterTimeline('all')" data-filter="all" class="timeline-filter-btn px-2 py-1 rounded text-xs font-medium bg-purple-600/30 text-purple-300 border border-purple-500/30">All</button>
-      <button onclick="filterTimeline('obsidian')" data-filter="obsidian" class="timeline-filter-btn px-2 py-1 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-white/5 hover:border-purple-500/20">Obsidian</button>
-      <button onclick="filterTimeline('sentinel')" data-filter="sentinel" class="timeline-filter-btn px-2 py-1 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-white/5 hover:border-red-500/20">Sentinel</button>
-      <button onclick="filterTimeline('ralph')" data-filter="ralph" class="timeline-filter-btn px-2 py-1 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-white/5 hover:border-green-500/20">Ralph</button>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Timeline -->
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Activity Feed</h2>
+        <div class="flex gap-1" id="timeline-filters">
+          <button onclick="filterTimeline('all')" data-filter="all" class="timeline-filter-btn px-2 py-1 rounded text-xs font-medium bg-purple-600/30 text-purple-300 border border-purple-500/30">All</button>
+          <button onclick="filterTimeline('obsidian')" data-filter="obsidian" class="timeline-filter-btn px-2 py-1 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-white/5 hover:border-purple-500/20">Obsidian</button>
+          <button onclick="filterTimeline('sentinel')" data-filter="sentinel" class="timeline-filter-btn px-2 py-1 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-white/5 hover:border-red-500/20">Sentinel</button>
+          <button onclick="filterTimeline('ralph')" data-filter="ralph" class="timeline-filter-btn px-2 py-1 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-white/5 hover:border-green-500/20">Ralph</button>
+        </div>
+      </div>
+      <div class="glass rounded-xl p-4 max-h-96 overflow-y-auto" id="timeline"></div>
+    </div>
+    <!-- Delegation Map -->
+    <div>
+      <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Delegation Map</h2>
+      <div class="glass rounded-xl p-4" id="delegation-map"></div>
     </div>
   </div>
-  <div class="glass rounded-xl p-4 max-h-96 overflow-y-auto" id="timeline"></div>
+</section>
+
+<!-- System Health -->
+<section class="max-w-7xl mx-auto px-6 py-6 pb-12" id="health-section">
+  <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">System Health</h2>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="health-checks"></div>
 </section>
 
 <!-- Footer -->
@@ -199,26 +234,42 @@ function sanitizeTrading(t) {
   };
 }
 
+function sanitizeCosts(costs, budget) {
+  if (!costs || Object.keys(costs).length === 0) return null;
+  const total = Object.values(costs).reduce((s, c) => s + (c.amount || 0), 0);
+  return { total, budget: budget || 0 };
+  // Omit: per-service line items
+}
+
 function sanitizeData(raw) {
   return {
     updated: raw.updated,
     agents: (raw.agents || []).map(sanitizeAgent),
     trading: sanitizeTrading(raw.trading),
     prdProgress: raw.prdProgress || {},
+    costs: sanitizeCosts(raw.costs, raw.budget),
     tasks: (raw.tasks || []).map(t => ({
       id: t.id,
       title: t.title,
-      agent: t.agent,
       status: t.status,
-      priority: t.priority,
-      // Omit: description
+      // Omit: agent, priority, description
     })),
     timeline: (raw.timeline || []).map(t => ({
       time: t.time,
       agent: t.agent,
       action: t.action,
     })),
-    // Omit: costs, budget, health, delegations
+    health: (raw.health || []).map(h => ({
+      name: h.name,
+      status: h.status,
+      detail: h.detail,
+    })),
+    delegations: (raw.delegations || []).map(d => ({
+      from: d.from,
+      to: d.to,
+      task: d.task,
+      status: d.status,
+    })),
   };
 }
 
@@ -229,6 +280,13 @@ let DATA = sanitizeData({
     { id: "sentinel", name: "Sentinel", role: "Trading Ops", emoji: "\u{1f6e1}\ufe0f", status: "warning", model: "Claude Sonnet", color: "red" },
     { id: "ralph", name: "Ralph", role: "Developer", emoji: "\u{1f528}", status: "active", model: "Codex (GPT)", color: "green" }
   ],
+  costs: {
+    claudeMax: { label: "Claude Max", amount: 200, icon: "" },
+    codex: { label: "Codex / ChatGPT", amount: 20, icon: "" },
+    haiku: { label: "Haiku Crons", amount: 3.20, icon: "" },
+    xApi: { label: "X API", amount: 5.00, icon: "" }
+  },
+  budget: 250,
   trading: { total: 11, resolved: 11, wins: 3, winRate: 27, pnl: 0, lastTrade: "2026-02-20T12:22:24.752571" },
   tasks: [],
   timeline: [
@@ -238,6 +296,23 @@ let DATA = sanitizeData({
     { time: "5:15 PM", agent: "ralph", action: "Completed CLI tool docs (task 2/18)" },
     { time: "4:30 PM", agent: "ralph", action: "Started PRD task loop \u2014 18 tasks queued" },
     { time: "9:00 AM", agent: "sentinel", action: "Data collection daemon running" },
+  ],
+  health: [
+    { name: "Data Daemon", status: "healthy", detail: "Running" },
+    { name: "Monitor", status: "healthy", detail: "Running" },
+    { name: "Post Queue", status: "healthy", detail: "Running" },
+    { name: "Ralph", status: "healthy", detail: "Responsive" },
+    { name: "Scanner", status: "error", detail: "Not running" },
+    { name: "Index Service", status: "warning", detail: "Processing" },
+    { name: "Social API", status: "healthy", detail: "OK" },
+    { name: "Market Feed", status: "error", detail: "Unavailable" },
+  ],
+  delegations: [
+    { from: "obsidian", to: "ralph", task: "Code improvements", status: "active" },
+    { from: "obsidian", to: "sentinel", task: "Market monitoring", status: "warning" },
+    { from: "obsidian", to: "sentinel", task: "Data collection", status: "active" },
+    { from: "jason", to: "obsidian", task: "Dashboard improvements", status: "active" },
+    { from: "jason", to: "obsidian", task: "Research & positioning", status: "active" },
   ],
   prdProgress: {},
 });
@@ -297,10 +372,24 @@ function renderTrading() {
   document.getElementById('trading-resolved').textContent = `${t.resolved} of ${t.total} resolved`;
 }
 
+function renderCosts() {
+  const section = document.getElementById('cost-section');
+  const c = DATA.costs;
+  if (!c) { section.style.display = 'none'; return; }
+  section.style.display = '';
+
+  document.getElementById('total-cost').textContent = `$${c.total.toFixed(2)}`;
+  document.getElementById('budget-label').textContent = `Budget: $${c.budget}/mo`;
+  const pct = c.budget > 0 ? (c.total / c.budget * 100).toFixed(0) : 0;
+  document.getElementById('budget-pct').textContent = `${pct}% of budget`;
+  const bar = document.getElementById('budget-bar');
+  bar.style.width = `${Math.min(pct, 100)}%`;
+  bar.className = `h-full rounded-full transition-all duration-500 ${pct > 90 ? 'bg-red-500' : pct > 70 ? 'bg-yellow-500' : 'bg-green-500'}`;
+}
+
 function renderTasks() {
   const cols = { backlog: 'col-backlog', progress: 'col-progress', review: 'col-review', done: 'col-done' };
   const counts = { backlog: 0, progress: 0, review: 0, done: 0 };
-  const priorityColors = { critical: 'border-l-red-500', high: 'border-l-purple-500', medium: 'border-l-blue-500', low: 'border-l-gray-500' };
 
   Object.values(cols).forEach(id => document.getElementById(id).innerHTML = '');
 
@@ -309,14 +398,8 @@ function renderTasks() {
     const el = document.getElementById(cols[t.status]);
     if (!el) return;
     el.innerHTML += `
-      <div class="task-card glass rounded-lg p-3 border-l-2 ${priorityColors[t.priority] || 'border-l-gray-500'}">
-        <div class="flex items-center justify-between">
-          <span class="text-sm text-white flex-1">${t.title}</span>
-        </div>
-        <div class="flex items-center justify-between mt-1">
-          <span class="text-xs text-gray-500">${t.agent}</span>
-          <span class="text-xs px-1.5 py-0.5 rounded ${t.priority === 'critical' ? 'bg-red-500/20 text-red-300' : t.priority === 'high' ? 'bg-purple-500/20 text-purple-300' : 'bg-gray-700 text-gray-400'}">${t.priority}</span>
-        </div>
+      <div class="glass rounded-lg p-3 border-l-2 border-l-gray-500">
+        <span class="text-sm text-white">${t.title}</span>
       </div>
     `;
   });
@@ -325,6 +408,57 @@ function renderTasks() {
   document.getElementById('count-progress').textContent = counts.progress;
   document.getElementById('count-review').textContent = counts.review;
   document.getElementById('count-done').textContent = counts.done;
+}
+
+function renderDelegations() {
+  const container = document.getElementById('delegation-map');
+  const statusBadge = {
+    active: '<span class="px-1.5 py-0.5 rounded text-xs bg-green-500/20 text-green-300">Active</span>',
+    warning: '<span class="px-1.5 py-0.5 rounded text-xs bg-yellow-500/20 text-yellow-300">Warning</span>',
+    done: '<span class="px-1.5 py-0.5 rounded text-xs bg-gray-700 text-gray-400">Done</span>'
+  };
+  const names = { obsidian: '\u{1f9e0} Obsidian', sentinel: '\u{1f6e1}\ufe0f Sentinel', ralph: '\u{1f528} Ralph', jason: '\u{1f468}\u200d\u{1f4bc} Jason' };
+
+  if (!DATA.delegations || DATA.delegations.length === 0) {
+    container.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">No active delegations.</p>';
+    return;
+  }
+
+  container.innerHTML = DATA.delegations.map(d => `
+    <div class="flex items-center gap-3 py-3 border-b border-white/5 last:border-0">
+      <span class="text-sm text-gray-400 w-28">${names[d.from] || d.from}</span>
+      <svg class="w-4 h-4 text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+      <span class="text-sm text-gray-400 w-28">${names[d.to] || d.to}</span>
+      <span class="text-sm text-white flex-1">${d.task}</span>
+      ${statusBadge[d.status] || ''}
+    </div>
+  `).join('');
+}
+
+function renderHealth() {
+  const container = document.getElementById('health-checks');
+  const section = document.getElementById('health-section');
+  if (!DATA.health || DATA.health.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = '';
+
+  const statusConfig = {
+    healthy: { dot: 'bg-green-500', bg: 'border-green-500/10', text: 'text-green-400' },
+    warning: { dot: 'bg-yellow-500', bg: 'border-yellow-500/10', text: 'text-yellow-400' },
+    error: { dot: 'bg-red-500 pulse-red', bg: 'border-red-500/10', text: 'text-red-400' }
+  };
+
+  container.innerHTML = DATA.health.map(h => {
+    const cfg = statusConfig[h.status] || statusConfig.healthy;
+    return `
+      <div class="glass rounded-lg p-3 border ${cfg.bg}">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="status-dot ${cfg.dot}"></span>
+          <span class="text-sm font-medium text-white">${h.name}</span>
+        </div>
+        <p class="text-xs ${cfg.text}">${h.detail}</p>
+      </div>
+    `;
+  }).join('');
 }
 
 let activeTimelineFilter = 'all';
@@ -415,10 +549,13 @@ function renderAll(data) {
   if (mobileTs) mobileTs.textContent = ts;
 
   renderAgentCards();
+  renderCosts();
   renderTrading();
   renderTasks();
   renderTimeline();
+  renderDelegations();
   renderPrdProgress();
+  renderHealth();
 }
 
 async function fetchAndRender() {
