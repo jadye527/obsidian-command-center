@@ -17,6 +17,7 @@ OUTPUT = os.path.join(DASHBOARD_DIR, "dashboard-state.json")
 ACTIVITY_LOG = os.path.join(DASHBOARD_DIR, "activity-log.jsonl")
 TRADE_DB = os.environ.get("TRADE_DB_PATH", os.path.join(WORKSPACE, "trading-bot/data/trades.db"))
 TMUX_SOCK = os.environ.get("TMUX_SOCKET", os.path.expanduser("~/.tmux/default"))
+X_API_DIR = os.environ.get("X_API_DIR", os.path.expanduser("~/.config/x-api"))
 
 
 def run(cmd, timeout=5):
@@ -104,6 +105,46 @@ def get_agent_status(agent_id):
     return info
 
 
+def get_x_metrics():
+    """Read X analytics and growth-tracker snapshots, return latest metrics."""
+    empty = {
+        "followers": 0, "following": 0, "totalPosts": 0,
+        "totals": {"likes": 0, "replies": 0, "reposts": 0, "impressions": 0, "bookmarks": 0, "engagement": 0},
+        "engagementByType": {},
+        "snapshotDate": None,
+    }
+    try:
+        analytics_path = os.path.join(X_API_DIR, "analytics.json")
+        data = json.loads(Path(analytics_path).read_text())
+        snapshots = data.get("snapshots", [])
+        if not snapshots:
+            return empty
+        latest = snapshots[-1]
+        result = {
+            "followers": latest.get("followers", 0),
+            "following": latest.get("following", 0),
+            "totalPosts": latest.get("total_tweets", 0),
+            "totals": latest.get("totals", empty["totals"]),
+            "snapshotDate": latest.get("date"),
+        }
+    except Exception:
+        return empty
+
+    try:
+        growth_path = os.path.join(X_API_DIR, "growth-tracker.json")
+        growth = json.loads(Path(growth_path).read_text())
+        growth_snaps = growth.get("snapshots", [])
+        if growth_snaps:
+            latest_growth = growth_snaps[-1]
+            result["engagementByType"] = latest_growth.get("by_type", {})
+        else:
+            result["engagementByType"] = {}
+    except Exception:
+        result["engagementByType"] = {}
+
+    return result
+
+
 def collect():
     now = datetime.now(timezone.utc)
 
@@ -172,6 +213,9 @@ def collect():
     except Exception:
         timeline = [{"time": now.strftime("%I:%M %p"), "agent": "obsidian", "action": "Dashboard data collected"}]
 
+    # X metrics
+    x_metrics = get_x_metrics()
+
     # Build state
     state = {
         "updated": now.isoformat(),
@@ -180,6 +224,7 @@ def collect():
         "budget": 250,
         "health": health,
         "trading": trades,
+        "xMetrics": x_metrics,
         "prdProgress": {"growthKit": growth_kit_prd},
         "timeline": timeline,
         "tasks": [],  # Can be populated from PRD files
