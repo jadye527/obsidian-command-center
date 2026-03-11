@@ -1,0 +1,123 @@
+{
+  "updated": "2026-03-11T06:10:06.975939+00:00",
+  "agents": [
+    {
+      "id": "obsidian",
+      "status": "offline",
+      "lastAction": "Unknown",
+      "name": "Obsidian",
+      "role": "CEO / Strategy",
+      "emoji": "\ud83e\udde0",
+      "model": "Claude Opus",
+      "color": "purple"
+    },
+    {
+      "id": "sentinel",
+      "status": "offline",
+      "lastAction": "Unknown",
+      "name": "Sentinel",
+      "role": "Trading Ops",
+      "emoji": "\ud83d\udee1\ufe0f",
+      "model": "Claude Sonnet",
+      "color": "red"
+    },
+    {
+      "id": "ralph",
+      "name": "Ralph",
+      "role": "Developer",
+      "emoji": "\ud83d\udd28",
+      "model": "Codex (GPT)",
+      "color": "green",
+      "status": "offline",
+      "lastAction": "No active session"
+    }
+  ],
+  "costs": {
+    "claudeMax": {
+      "label": "Claude Max",
+      "amount": 200,
+      "icon": "\ud83e\udde0"
+    },
+    "codex": {
+      "label": "Codex / ChatGPT",
+      "amount": 20,
+      "icon": "\ud83d\udd28"
+    },
+    "haiku": {
+      "label": "Haiku Crons",
+      "amount": 3.2,
+      "icon": "\u26a1"
+    },
+    "xApi": {
+      "label": "X API",
+      "amount": 5.0,
+      "icon": "\ud83d\udc26"
+    }
+  },
+  "budget": 250,
+  "health": [
+    {
+      "name": "METAR Daemon",
+      "status": "healthy",
+      "detail": "Running"
+    },
+    {
+      "name": "5-Min Monitor",
+      "status": "healthy",
+      "detail": "Running"
+    },
+    {
+      "name": "Tweet Drip",
+      "status": "healthy",
+      "detail": "Running"
+    },
+    {
+      "name": "OpenClaw Gateway",
+      "status": "healthy",
+      "detail": "Running"
+    }
+  ],
+  "trading": {
+    "total": 11,
+    "resolved": 11,
+    "wins": 3,
+    "winRate": 27,
+    "pnl": -50.05,
+    "lastTrade": "2026-02-20T12:22:24.752571"
+  },
+  "prdProgress": {
+    "growthKit": {
+      "done": 15,
+      "total": 15,
+      "pct": 100
+    }
+  },
+  "timeline": [
+    {
+      "time": "06:10 AM",
+      "agent": "obsidian",
+      "action": "Dashboard data collected"
+    }
+  ],
+  "tasks": [],
+  "delegations": [
+    {
+      "from": "obsidian",
+      "to": "ralph",
+      "task": "Dashboard improvements",
+      "status": "idle"
+    },
+    {
+      "from": "obsidian",
+      "to": "sentinel",
+      "task": "Market scanning & trading",
+      "status": "active"
+    },
+    {
+      "from": "jason",
+      "to": "obsidian",
+      "task": "Company operations",
+      "status": "active"
+    }
+  ]
+}

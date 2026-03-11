@@ -407,11 +407,12 @@ function renderHealth() {
 }
 
 // ============================================================
-// INIT
+// INIT + AUTO-REFRESH
 // ============================================================
-function init() {
+function renderAll(data) {
+  window.DATA = data;
   document.getElementById('last-updated').textContent =
-    `Updated: ${new Date(DATA.updated).toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, month: 'short', day: 'numeric' })}`;
+    `Updated: ${new Date(data.updated).toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, month: 'short', day: 'numeric' })}`;
   renderAgentCards();
   renderCosts();
   renderTasks();
@@ -420,7 +421,24 @@ function init() {
   renderHealth();
 }
 
-init();
+async function fetchAndRender() {
+  try {
+    const resp = await fetch('dashboard-state.json?t=' + Date.now());
+    if (resp.ok) {
+      const data = await resp.json();
+      renderAll(data);
+    }
+  } catch (e) {
+    // Fall back to hardcoded DATA if fetch fails
+  }
+}
+
+// Initial render with hardcoded data
+renderAll(DATA);
+
+// Try to load live data, then refresh every 60s
+fetchAndRender();
+setInterval(fetchAndRender, 60000);
 </script>
 </body>
 </html>
