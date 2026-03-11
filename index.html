@@ -31,6 +31,12 @@
   .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
   .mobile-menu { transform: translateY(-100%); transition: transform 0.25s ease; }
   .mobile-menu.open { transform: translateY(0); }
+  /* Refresh animations */
+  @keyframes flashUpdate { 0% { background-color: rgba(139,92,246,0.15); } 100% { background-color: transparent; } }
+  .value-flash { animation: flashUpdate 0.8s ease-out; }
+  .section-fade { opacity: 0; animation: fadeIn 0.4s ease forwards; }
+  @keyframes fadeIn { to { opacity: 1; } }
+  .refresh-indicator { transition: opacity 0.3s ease; }
 </style>
 </head>
 <body class="min-h-screen">
@@ -577,6 +583,140 @@ function renderHealth() {
 }
 
 // ============================================================
+// ANIMATED RENDER FUNCTIONS (used on data refresh)
+// ============================================================
+function renderAgentCardsAnimated() {
+  const container = document.getElementById('agent-cards');
+  const oldCards = container.children;
+
+  // Re-render then animate changed cards
+  renderAgentCards();
+
+  if (previousData) {
+    DATA.agents.forEach((a, i) => {
+      const prev = previousData.agents && previousData.agents[i];
+      if (!prev) return;
+      const card = container.children[i];
+      if (!card) return;
+      const changed = a.status !== prev.status || a.tasksToday !== prev.tasksToday || a.lastAction !== prev.lastAction || a.uptime !== prev.uptime;
+      if (changed) flashElement(card);
+    });
+  }
+}
+
+function renderCostsAnimated() {
+  const prevTotal = previousData ? Object.values(previousData.costs).reduce((s, c) => s + c.amount, 0) : 0;
+  const newTotal = Object.values(DATA.costs).reduce((s, c) => s + c.amount, 0);
+  const totalEl = document.getElementById('total-cost');
+
+  if (prevTotal !== newTotal) {
+    animateNumber(totalEl, prevTotal, newTotal, 600, v => `$${v.toFixed(2)}`);
+    flashElement(totalEl);
+  } else {
+    totalEl.textContent = `$${newTotal.toFixed(2)}`;
+  }
+
+  // Render breakdown and budget normally
+  const container = document.getElementById('cost-breakdown');
+  container.innerHTML = Object.values(DATA.costs).map(c => `
+    <div class="text-center">
+      <p class="text-lg">${c.icon}</p>
+      <p class="mono font-bold text-white">$${c.amount.toFixed(2)}</p>
+      <p class="text-xs text-gray-500">${c.label}</p>
+    </div>
+  `).join('');
+
+  const pct = (newTotal / DATA.budget * 100).toFixed(0);
+  document.getElementById('budget-pct').textContent = `${pct}% of budget`;
+  const bar = document.getElementById('budget-bar');
+  bar.style.width = `${Math.min(pct, 100)}%`;
+  bar.className = `h-full rounded-full transition-all duration-500 ${pct > 90 ? 'bg-red-500' : pct > 70 ? 'bg-yellow-500' : 'bg-green-500'}`;
+
+  fadeInChildren(container);
+}
+
+function renderTradingAnimated() {
+  const prev = previousData && previousData.trading;
+  const t = DATA.trading;
+  if (!t || !prev) { renderTrading(); return; }
+
+  const winColor = t.winRate >= 50 ? 'text-green-400' : 'text-red-400';
+  const pnlColor = t.pnl >= 0 ? 'text-green-400' : 'text-red-400';
+
+  const wrEl = document.getElementById('trading-winrate');
+  wrEl.className = `text-2xl font-bold mono ${winColor}`;
+  if (prev.winRate !== t.winRate) {
+    animateNumber(wrEl, prev.winRate, t.winRate, 500, v => `${Math.round(v)}%`);
+    flashElement(wrEl);
+  } else {
+    wrEl.textContent = `${t.winRate}%`;
+  }
+
+  const pnlEl = document.getElementById('trading-pnl');
+  pnlEl.className = `text-2xl font-bold mono ${pnlColor}`;
+  if (prev.pnl !== t.pnl) {
+    animateNumber(pnlEl, prev.pnl, t.pnl, 500, v => v >= 0 ? `+$${v.toFixed(2)}` : `-$${Math.abs(v).toFixed(2)}`);
+    flashElement(pnlEl);
+  } else {
+    pnlEl.textContent = t.pnl >= 0 ? `+$${t.pnl.toFixed(2)}` : `-$${Math.abs(t.pnl).toFixed(2)}`;
+  }
+
+  const totalEl = document.getElementById('trading-total');
+  if (prev.total !== t.total) {
+    animateNumber(totalEl, prev.total, t.total, 500, v => `${Math.round(v)}`);
+    flashElement(totalEl);
+  } else {
+    totalEl.textContent = t.total;
+  }
+
+  const lastDate = new Date(t.lastTrade);
+  document.getElementById('trading-last').textContent = lastDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  document.getElementById('trading-record').textContent = `Record: ${t.wins}W / ${t.total - t.wins}L`;
+  document.getElementById('trading-resolved').textContent = `${t.resolved} of ${t.total} resolved`;
+}
+
+// ============================================================
+// TRANSITION HELPERS
+// ============================================================
+let previousData = null;
+
+function animateNumber(el, from, to, duration, formatter) {
+  if (from === to) return;
+  const start = performance.now();
+  function tick(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const eased = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    const current = from + (to - from) * eased;
+    el.textContent = formatter(current);
+    if (t < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function flashElement(el) {
+  el.classList.remove('value-flash');
+  void el.offsetWidth; // force reflow to restart animation
+  el.classList.add('value-flash');
+}
+
+function fadeInChildren(container) {
+  Array.from(container.children).forEach((child, i) => {
+    child.style.opacity = '0';
+    child.style.transition = `opacity 0.3s ease ${i * 0.05}s`;
+    requestAnimationFrame(() => { child.style.opacity = '1'; });
+  });
+}
+
+function updateTextWithFlash(id, newText) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (el.textContent !== newText) {
+    el.textContent = newText;
+    flashElement(el);
+  }
+}
+
+// ============================================================
 // INIT + AUTO-REFRESH
 // ============================================================
 function toggleMobileMenu() {
@@ -590,19 +730,32 @@ function toggleMobileMenu() {
 }
 
 function renderAll(data) {
+  const isRefresh = previousData !== null;
+  previousData = window.DATA ? JSON.parse(JSON.stringify(window.DATA)) : null;
   window.DATA = data;
   const ts = `Updated: ${new Date(data.updated).toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, month: 'short', day: 'numeric' })}`;
   document.getElementById('last-updated').textContent = ts;
   const mobileTs = document.getElementById('last-updated-mobile');
   if (mobileTs) mobileTs.textContent = ts;
-  renderAgentCards();
-  renderCosts();
+
+  if (isRefresh) {
+    renderAgentCardsAnimated();
+    renderCostsAnimated();
+    renderTradingAnimated();
+  } else {
+    renderAgentCards();
+    renderCosts();
+    renderTrading();
+  }
   renderTasks();
   renderTimeline();
   renderDelegations();
-  renderTrading();
   renderPrdProgress();
   renderHealth();
+
+  if (isRefresh) {
+    fadeInChildren(document.getElementById('health-checks'));
+  }
 }
 
 async function fetchAndRender() {
