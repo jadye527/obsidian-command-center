@@ -1,5 +1,5 @@
 {
-  "updated": "2026-03-11T06:15:01.553570+00:00",
+  "updated": "2026-03-11T06:30:01.232705+00:00",
   "agents": [
     {
       "id": "obsidian",
@@ -28,8 +28,8 @@
       "emoji": "\ud83d\udd28",
       "model": "Codex (GPT)",
       "color": "green",
-      "status": "offline",
-      "lastAction": "No active session"
+      "status": "active",
+      "lastAction": "tmux: ralph-dashboard"
     }
   ],
   "costs": {
@@ -75,6 +75,11 @@
       "name": "OpenClaw Gateway",
       "status": "healthy",
       "detail": "Running"
+    },
+    {
+      "name": "Ralph (ralph-dashboard)",
+      "status": "healthy",
+      "detail": "Active in tmux"
     }
   ],
   "trading": {
@@ -94,7 +99,7 @@
   },
   "timeline": [
     {
-      "time": "06:15 AM",
+      "time": "06:30 AM",
       "agent": "obsidian",
       "action": "Dashboard data collected"
     }
@@ -105,7 +110,7 @@
       "from": "obsidian",
       "to": "ralph",
       "task": "Dashboard improvements",
-      "status": "idle"
+      "status": "active"
     },
     {
       "from": "obsidian",
