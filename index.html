@@ -104,6 +104,12 @@
   </div>
 </section>
 
+<!-- PRD Progress -->
+<section class="max-w-7xl mx-auto px-6 py-4" id="prd-progress-section">
+  <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">PRD Progress</h2>
+  <div class="glass rounded-xl p-5" id="prd-progress"></div>
+</section>
+
 <!-- Task Board (Kanban) -->
 <section class="max-w-7xl mx-auto px-6 py-6">
   <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Task Board</h2>
@@ -445,6 +451,31 @@ function renderTrading() {
   document.getElementById('trading-resolved').textContent = `${t.resolved} of ${t.total} resolved`;
 }
 
+function renderPrdProgress() {
+  const container = document.getElementById('prd-progress');
+  const section = document.getElementById('prd-progress-section');
+  const prds = DATA.prdProgress;
+  if (!prds || Object.keys(prds).length === 0) { section.style.display = 'none'; return; }
+  section.style.display = '';
+
+  container.innerHTML = Object.entries(prds).map(([key, p]) => {
+    const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase());
+    const barColor = p.pct === 100 ? 'bg-green-500' : p.pct >= 60 ? 'bg-purple-500' : 'bg-blue-500';
+    const glowClass = p.pct === 100 ? 'glow-green' : '';
+    return `
+      <div class="mb-4 last:mb-0 ${glowClass}">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-sm font-medium text-white">${label}</span>
+          <span class="text-xs mono text-gray-400">${p.done}/${p.total} tasks — ${p.pct}%</span>
+        </div>
+        <div class="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
+          <div class="h-full rounded-full transition-all duration-500 ${barColor}" style="width: ${p.pct}%"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
 function renderHealth() {
   const container = document.getElementById('health-checks');
   const statusConfig = {
@@ -480,6 +511,7 @@ function renderAll(data) {
   renderTimeline();
   renderDelegations();
   renderTrading();
+  renderPrdProgress();
   renderHealth();
 }
 
