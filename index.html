@@ -29,6 +29,8 @@
   .timeline-item::before { content: ''; position: absolute; left: 15px; top: 28px; bottom: -12px; width: 2px; background: rgba(139,92,246,0.2); }
   .timeline-item:last-child::before { display: none; }
   .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .mobile-menu { transform: translateY(-100%); transition: transform 0.25s ease; }
+  .mobile-menu.open { transform: translateY(0); }
 </style>
 </head>
 <body class="min-h-screen">
@@ -45,13 +47,30 @@
         <p class="text-xs text-gray-500">JSJ Consulting — Agent Orchestration</p>
       </div>
     </div>
-    <div class="flex items-center gap-4">
+    <div class="hidden md:flex items-center gap-4" id="desktop-nav">
       <span class="text-xs text-gray-500 mono" id="last-updated"></span>
       <a href="https://x.com/ObsidianLabsAI" target="_blank" class="text-gray-400 hover:text-purple-400 text-sm">@ObsidianLabsAI</a>
       <span class="px-2 py-1 rounded-md text-xs font-medium bg-purple-600/20 text-purple-300 border border-purple-500/20">Built by AI</span>
     </div>
+    <button class="md:hidden p-2 text-gray-400 hover:text-white" id="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+      <svg class="w-6 h-6" id="hamburger-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      <svg class="w-6 h-6 hidden" id="hamburger-close-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
   </div>
 </header>
+
+<!-- Mobile Menu -->
+<nav class="mobile-menu md:hidden fixed top-0 left-0 right-0 z-50 bg-[#0a0a0f]/95 border-b border-white/10 backdrop-blur-md" id="mobile-menu">
+  <div class="px-6 pt-16 pb-6 flex flex-col gap-4">
+    <span class="text-xs text-gray-500 mono" id="last-updated-mobile"></span>
+    <a href="https://x.com/ObsidianLabsAI" target="_blank" class="text-gray-400 hover:text-purple-400 text-sm">@ObsidianLabsAI</a>
+    <span class="px-2 py-1 rounded-md text-xs font-medium bg-purple-600/20 text-purple-300 border border-purple-500/20 w-fit">Built by AI</span>
+    <div class="border-t border-white/5 pt-4 flex flex-col gap-3">
+      <a href="https://jadye527.github.io/obsidian-trading/" class="text-sm text-gray-400 hover:text-purple-400">Trading Dashboard</a>
+      <a href="https://github.com/jadye527/obsidian-growth-kit" class="text-sm text-gray-400 hover:text-purple-400">Growth Kit</a>
+    </div>
+  </div>
+</nav>
 
 <!-- Agent Status Cards -->
 <section class="max-w-7xl mx-auto px-6 py-6">
@@ -560,10 +579,22 @@ function renderHealth() {
 // ============================================================
 // INIT + AUTO-REFRESH
 // ============================================================
+function toggleMobileMenu() {
+  const menu = document.getElementById('mobile-menu');
+  const openIcon = document.getElementById('hamburger-icon');
+  const closeIcon = document.getElementById('hamburger-close-icon');
+  const isOpen = menu.classList.contains('open');
+  menu.classList.toggle('open');
+  openIcon.classList.toggle('hidden', !isOpen);
+  closeIcon.classList.toggle('hidden', isOpen);
+}
+
 function renderAll(data) {
   window.DATA = data;
-  document.getElementById('last-updated').textContent =
-    `Updated: ${new Date(data.updated).toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, month: 'short', day: 'numeric' })}`;
+  const ts = `Updated: ${new Date(data.updated).toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, month: 'short', day: 'numeric' })}`;
+  document.getElementById('last-updated').textContent = ts;
+  const mobileTs = document.getElementById('last-updated-mobile');
+  if (mobileTs) mobileTs.textContent = ts;
   renderAgentCards();
   renderCosts();
   renderTasks();
