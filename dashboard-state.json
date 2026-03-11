@@ -1,5 +1,5 @@
 {
-  "updated": "2026-03-11T06:45:01.678702+00:00",
+  "updated": "2026-03-11T07:00:02.050410+00:00",
   "agents": [
     {
       "id": "obsidian",
@@ -9,7 +9,9 @@
       "role": "CEO / Strategy",
       "emoji": "\ud83e\udde0",
       "model": "Claude Opus",
-      "color": "purple"
+      "color": "purple",
+      "uptime": "58%",
+      "lastSeen": "2026-03-11T06:55:50.698038+00:00"
     },
     {
       "id": "sentinel",
@@ -19,7 +21,9 @@
       "role": "Trading Ops",
       "emoji": "\ud83d\udee1\ufe0f",
       "model": "Claude Sonnet",
-      "color": "red"
+      "color": "red",
+      "uptime": "8%",
+      "lastSeen": "2026-03-11T06:41:25.729961+00:00"
     },
     {
       "id": "ralph",
@@ -29,7 +33,9 @@
       "model": "Codex (GPT)",
       "color": "green",
       "status": "offline",
-      "lastAction": "No active session"
+      "lastAction": "No active session",
+      "uptime": "0%",
+      "lastSeen": null
     }
   ],
   "costs": {
@@ -64,6 +70,43 @@
     "pnl": 0,
     "lastTrade": "unknown"
   },
+  "xMetrics": {
+    "followers": 8,
+    "following": 86,
+    "totalPosts": 79,
+    "totals": {
+      "likes": 7,
+      "replies": 5,
+      "reposts": 0,
+      "impressions": 120,
+      "bookmarks": 0,
+      "engagement": 12
+    },
+    "snapshotDate": "2026-03-10 23:43",
+    "engagementByType": {
+      "value": {
+        "count": 4,
+        "total_engagement": 6,
+        "total_likes": 1,
+        "total_replies": 1,
+        "total_rts": 0
+      },
+      "build-in-public": {
+        "count": 1,
+        "total_engagement": 0,
+        "total_likes": 0,
+        "total_replies": 0,
+        "total_rts": 0
+      },
+      "reply": {
+        "count": 5,
+        "total_engagement": 15,
+        "total_likes": 0,
+        "total_replies": 3,
+        "total_rts": 0
+      }
+    }
+  },
   "prdProgress": {
     "growthKit": {
       "done": 0,
@@ -73,7 +116,7 @@
   },
   "timeline": [
     {
-      "time": "06:45 AM",
+      "time": "07:00 AM",
       "agent": "obsidian",
       "action": "Dashboard data collected"
     }
