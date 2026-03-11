@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Obsidian Command Center — Public View</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
+  body { font-family: 'Inter', sans-serif; background: #0a0a0f; color: #e2e8f0; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); backdrop-filter: blur(10px); }
+  .glow-purple { box-shadow: 0 0 20px rgba(139,92,246,0.15); }
+  .glow-green { box-shadow: 0 0 15px rgba(34,197,94,0.2); }
+  .glow-red { box-shadow: 0 0 15px rgba(239,68,68,0.2); }
+  .glow-yellow { box-shadow: 0 0 15px rgba(234,179,8,0.2); }
+  .pulse-green { animation: pulseGreen 2s ease-in-out infinite; }
+  .pulse-red { animation: pulseRed 1.5s ease-in-out infinite; }
+  @keyframes pulseGreen { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+  @keyframes pulseRed { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .kanban-col { min-height: 200px; }
+  .task-card { transition: transform 0.15s, box-shadow 0.15s; cursor: pointer; }
+  .task-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+  .task-details { max-height: 0; overflow: hidden; transition: max-height 0.25s ease-out, opacity 0.2s ease-out; opacity: 0; }
+  .task-card.expanded .task-details { max-height: 200px; opacity: 1; transition: max-height 0.3s ease-in, opacity 0.25s ease-in; }
+  .task-chevron { transition: transform 0.25s ease; }
+  .task-card.expanded .task-chevron { transform: rotate(180deg); }
+  .agent-avatar { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .timeline-item::before { content: ''; position: absolute; left: 15px; top: 28px; bottom: -12px; width: 2px; background: rgba(139,92,246,0.2); }
+  .timeline-item:last-child::before { display: none; }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .mobile-menu { transform: translateY(-100%); transition: transform 0.25s ease; }
+  .mobile-menu.open { transform: translateY(0); }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- Header -->
+<header class="border-b border-white/5 px-6 py-4">
+  <div class="max-w-7xl mx-auto flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-purple-600/20 flex items-center justify-center text-xl">
+        <svg class="w-6 h-6 text-purple-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
+      </div>
+      <div>
+        <h1 class="text-lg font-bold text-white">Obsidian Command Center</h1>
+        <p class="text-xs text-gray-500">JSJ Consulting — Agent Orchestration</p>
+      </div>
+    </div>
+    <div class="hidden md:flex items-center gap-4" id="desktop-nav">
+      <span class="text-xs text-gray-500 mono" id="last-updated"></span>
+      <span class="px-2 py-1 rounded-md text-xs font-medium bg-gray-700/50 text-gray-300 border border-gray-600/30">Public View</span>
+      <a href="https://x.com/ObsidianLabsAI" target="_blank" class="text-gray-400 hover:text-purple-400 text-sm">@ObsidianLabsAI</a>
+      <span class="px-2 py-1 rounded-md text-xs font-medium bg-purple-600/20 text-purple-300 border border-purple-500/20">Built by AI</span>
+    </div>
+    <button class="md:hidden p-2 text-gray-400 hover:text-white" id="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+      <svg class="w-6 h-6" id="hamburger-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      <svg class="w-6 h-6 hidden" id="hamburger-close-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- Mobile Menu -->
+<nav class="mobile-menu md:hidden fixed top-0 left-0 right-0 z-50 bg-[#0a0a0f]/95 border-b border-white/10 backdrop-filter backdrop-blur-md" id="mobile-menu">
+  <div class="px-6 pt-16 pb-6 flex flex-col gap-4">
+    <span class="text-xs text-gray-500 mono" id="last-updated-mobile"></span>
+    <span class="px-2 py-1 rounded-md text-xs font-medium bg-gray-700/50 text-gray-300 border border-gray-600/30 w-fit">Public View</span>
+    <a href="https://x.com/ObsidianLabsAI" target="_blank" class="text-gray-400 hover:text-purple-400 text-sm">@ObsidianLabsAI</a>
+    <span class="px-2 py-1 rounded-md text-xs font-medium bg-purple-600/20 text-purple-300 border border-purple-500/20 w-fit">Built by AI</span>
+  </div>
+</nav>
+
+<!-- Agent Status Cards -->
+<section class="max-w-7xl mx-auto px-6 py-6">
+  <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Agent Fleet</h2>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="agent-cards"></div>
+</section>
+
+<!-- Trading Stats (sanitized — no P&L) -->
+<section class="max-w-7xl mx-auto px-6 py-4">
+  <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Trading Performance</h2>
+  <div class="glass rounded-xl p-5" id="trading-panel">
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+      <div class="text-center">
+        <p class="text-2xl font-bold mono" id="trading-winrate">—</p>
+        <p class="text-xs text-gray-500 mt-1">Win Rate</p>
+      </div>
+      <div class="text-center">
+        <p class="text-2xl font-bold mono text-white" id="trading-total">—</p>
+        <p class="text-xs text-gray-500 mt-1">Total Trades</p>
+      </div>
+      <div class="text-center">
+        <p class="text-2xl font-bold mono text-white" id="trading-last">—</p>
+        <p class="text-xs text-gray-500 mt-1">Last Trade</p>
+      </div>
+    </div>
+    <div class="mt-4 pt-4 border-t border-white/5 flex items-center justify-between text-xs text-gray-500">
+      <span id="trading-record"></span>
+      <span id="trading-resolved"></span>
+    </div>
+  </div>
+</section>
+
+<!-- PRD Progress -->
+<section class="max-w-7xl mx-auto px-6 py-4" id="prd-progress-section">
+  <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">PRD Progress</h2>
+  <div class="glass rounded-xl p-5" id="prd-progress"></div>
+</section>
+
+<!-- Task Board (Kanban) -->
+<section class="max-w-7xl mx-auto px-6 py-6">
+  <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Task Board</h2>
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="kanban-col">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="status-dot bg-gray-500"></span>
+        <span class="text-sm font-semibold text-gray-400">Backlog</span>
+        <span class="text-xs text-gray-600 mono" id="count-backlog"></span>
+      </div>
+      <div id="col-backlog" class="space-y-2"></div>
+    </div>
+    <div class="kanban-col">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="status-dot bg-blue-500"></span>
+        <span class="text-sm font-semibold text-blue-400">In Progress</span>
+        <span class="text-xs text-gray-600 mono" id="count-progress"></span>
+      </div>
+      <div id="col-progress" class="space-y-2"></div>
+    </div>
+    <div class="kanban-col">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="status-dot bg-yellow-500"></span>
+        <span class="text-sm font-semibold text-yellow-400">Review</span>
+        <span class="text-xs text-gray-600 mono" id="count-review"></span>
+      </div>
+      <div id="col-review" class="space-y-2"></div>
+    </div>
+    <div class="kanban-col">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="status-dot bg-green-500"></span>
+        <span class="text-sm font-semibold text-green-400">Done</span>
+        <span class="text-xs text-gray-600 mono" id="count-done"></span>
+      </div>
+      <div id="col-done" class="space-y-2"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Activity Timeline (no delegation map) -->
+<section class="max-w-7xl mx-auto px-6 py-6">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Activity Feed</h2>
+    <div class="flex gap-1" id="timeline-filters">
+      <button onclick="filterTimeline('all')" data-filter="all" class="timeline-filter-btn px-2 py-1 rounded text-xs font-medium bg-purple-600/30 text-purple-300 border border-purple-500/30">All</button>
+      <button onclick="filterTimeline('obsidian')" data-filter="obsidian" class="timeline-filter-btn px-2 py-1 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-white/5 hover:border-purple-500/20">Obsidian</button>
+      <button onclick="filterTimeline('sentinel')" data-filter="sentinel" class="timeline-filter-btn px-2 py-1 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-white/5 hover:border-red-500/20">Sentinel</button>
+      <button onclick="filterTimeline('ralph')" data-filter="ralph" class="timeline-filter-btn px-2 py-1 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-white/5 hover:border-green-500/20">Ralph</button>
+    </div>
+  </div>
+  <div class="glass rounded-xl p-4 max-h-96 overflow-y-auto" id="timeline"></div>
+</section>
+
+<!-- Footer -->
+<footer class="border-t border-white/5 py-6 text-center">
+  <p class="text-xs text-gray-600">Obsidian Command Center — JSJ Consulting — Public View</p>
+  <p class="text-xs text-gray-700 mt-1">
+    <a href="https://x.com/ObsidianLabsAI" class="hover:text-purple-400">@ObsidianLabsAI</a>
+  </p>
+</footer>
+
+<script>
+// ============================================================
+// PUBLIC VIEW — Sanitized data, no sensitive details
+// ============================================================
+
+// Sanitize functions strip sensitive fields from live data
+function sanitizeAgent(a) {
+  return {
+    id: a.id,
+    name: a.name,
+    role: a.role,
+    emoji: a.emoji,
+    status: a.status,
+    model: a.model,
+    color: a.color,
+    // Omit: uptime, tasksToday, lastAction, warning
+  };
+}
+
+function sanitizeTrading(t) {
+  if (!t) return null;
+  return {
+    total: t.total,
+    resolved: t.resolved,
+    wins: t.wins,
+    winRate: t.winRate,
+    lastTrade: t.lastTrade,
+    // Omit: pnl
+  };
+}
+
+function sanitizeData(raw) {
+  return {
+    updated: raw.updated,
+    agents: (raw.agents || []).map(sanitizeAgent),
+    trading: sanitizeTrading(raw.trading),
+    prdProgress: raw.prdProgress || {},
+    tasks: (raw.tasks || []).map(t => ({
+      id: t.id,
+      title: t.title,
+      agent: t.agent,
+      status: t.status,
+      priority: t.priority,
+      // Omit: description
+    })),
+    timeline: (raw.timeline || []).map(t => ({
+      time: t.time,
+      agent: t.agent,
+      action: t.action,
+    })),
+    // Omit: costs, budget, health, delegations
+  };
+}
+
+let DATA = sanitizeData({
+  updated: "2026-03-10T21:46:00Z",
+  agents: [
+    { id: "obsidian", name: "Obsidian", role: "CEO / Strategy", emoji: "\u{1f9e0}", status: "active", model: "Claude Opus", color: "purple" },
+    { id: "sentinel", name: "Sentinel", role: "Trading Ops", emoji: "\u{1f6e1}\ufe0f", status: "warning", model: "Claude Sonnet", color: "red" },
+    { id: "ralph", name: "Ralph", role: "Developer", emoji: "\u{1f528}", status: "active", model: "Codex (GPT)", color: "green" }
+  ],
+  trading: { total: 11, resolved: 11, wins: 3, winRate: 27, pnl: -50.05, lastTrade: "2026-02-20T12:22:24.752571" },
+  tasks: [],
+  timeline: [
+    { time: "5:46 PM", agent: "obsidian", action: "Chapter 11 committed & pushed to Growth Kit repo" },
+    { time: "5:30 PM", agent: "obsidian", action: "Performance review completed for agent fleet" },
+    { time: "5:20 PM", agent: "ralph", action: "Completed xanalytics --help (task 3/18)" },
+    { time: "5:15 PM", agent: "ralph", action: "Completed xqueue --help (task 2/18)" },
+    { time: "4:30 PM", agent: "ralph", action: "Started PRD task loop \u2014 18 tasks queued" },
+    { time: "9:00 AM", agent: "sentinel", action: "METAR daemon running \u2014 collecting data" },
+  ],
+  prdProgress: {},
+});
+
+// ============================================================
+// RENDER FUNCTIONS
+// ============================================================
+
+function renderAgentCards() {
+  const container = document.getElementById('agent-cards');
+  const statusColors = {
+    active: 'bg-green-500 pulse-green',
+    warning: 'bg-yellow-500 pulse-red',
+    error: 'bg-red-500 pulse-red',
+    offline: 'bg-gray-600'
+  };
+  const borderColors = { active: 'border-green-500/20', warning: 'border-yellow-500/20', error: 'border-red-500/20', offline: 'border-gray-700' };
+  const glowClass = { active: 'glow-green', warning: 'glow-yellow', error: 'glow-red', offline: '' };
+
+  container.innerHTML = DATA.agents.map(a => `
+    <div class="glass rounded-xl p-5 ${glowClass[a.status] || ''} border ${borderColors[a.status] || 'border-gray-700'}">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <div class="agent-avatar bg-${a.color}-600/20">${a.emoji}</div>
+          <div>
+            <h3 class="font-bold text-white">${a.name}</h3>
+            <p class="text-xs text-gray-500">${a.role}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="status-dot ${statusColors[a.status] || 'bg-gray-600'}"></span>
+          <span class="text-xs text-gray-400 capitalize">${a.status}</span>
+        </div>
+      </div>
+      <div class="text-center pt-2 border-t border-white/5">
+        <p class="text-xs text-gray-400 mono">${a.model}</p>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderTrading() {
+  const t = DATA.trading;
+  if (!t) { document.getElementById('trading-panel').style.display = 'none'; return; }
+
+  const winColor = t.winRate >= 50 ? 'text-green-400' : 'text-red-400';
+
+  document.getElementById('trading-winrate').className = `text-2xl font-bold mono ${winColor}`;
+  document.getElementById('trading-winrate').textContent = `${t.winRate}%`;
+
+  document.getElementById('trading-total').textContent = t.total;
+
+  const lastDate = new Date(t.lastTrade);
+  document.getElementById('trading-last').textContent = lastDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  document.getElementById('trading-record').textContent = `Record: ${t.wins}W / ${t.total - t.wins}L`;
+  document.getElementById('trading-resolved').textContent = `${t.resolved} of ${t.total} resolved`;
+}
+
+function renderTasks() {
+  const cols = { backlog: 'col-backlog', progress: 'col-progress', review: 'col-review', done: 'col-done' };
+  const counts = { backlog: 0, progress: 0, review: 0, done: 0 };
+  const priorityColors = { critical: 'border-l-red-500', high: 'border-l-purple-500', medium: 'border-l-blue-500', low: 'border-l-gray-500' };
+
+  Object.values(cols).forEach(id => document.getElementById(id).innerHTML = '');
+
+  DATA.tasks.forEach(t => {
+    counts[t.status]++;
+    const el = document.getElementById(cols[t.status]);
+    if (!el) return;
+    el.innerHTML += `
+      <div class="task-card glass rounded-lg p-3 border-l-2 ${priorityColors[t.priority] || 'border-l-gray-500'}">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-white flex-1">${t.title}</span>
+        </div>
+        <div class="flex items-center justify-between mt-1">
+          <span class="text-xs text-gray-500">${t.agent}</span>
+          <span class="text-xs px-1.5 py-0.5 rounded ${t.priority === 'critical' ? 'bg-red-500/20 text-red-300' : t.priority === 'high' ? 'bg-purple-500/20 text-purple-300' : 'bg-gray-700 text-gray-400'}">${t.priority}</span>
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById('count-backlog').textContent = counts.backlog;
+  document.getElementById('count-progress').textContent = counts.progress;
+  document.getElementById('count-review').textContent = counts.review;
+  document.getElementById('count-done').textContent = counts.done;
+}
+
+let activeTimelineFilter = 'all';
+
+function renderTimeline() {
+  const container = document.getElementById('timeline');
+  const agentEmoji = {};
+  DATA.agents.forEach(a => agentEmoji[a.id] = a.emoji);
+
+  const items = activeTimelineFilter === 'all'
+    ? DATA.timeline
+    : DATA.timeline.filter(t => t.agent === activeTimelineFilter);
+
+  if (items.length === 0) {
+    container.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">No activity for this agent.</p>';
+    return;
+  }
+
+  container.innerHTML = items.map(t => `
+    <div class="timeline-item relative pl-10 pb-4">
+      <div class="absolute left-0 top-1 w-8 h-8 rounded-lg bg-purple-600/10 flex items-center justify-center text-sm">
+        ${agentEmoji[t.agent] || '\u{1f464}'}
+      </div>
+      <p class="text-sm text-white">${t.action}</p>
+      <p class="text-xs text-gray-500 mono mt-0.5">${t.time} — ${t.agent}</p>
+    </div>
+  `).join('');
+}
+
+function filterTimeline(agent) {
+  activeTimelineFilter = agent;
+  const agentColors = { obsidian: 'purple', sentinel: 'red', ralph: 'green' };
+  document.querySelectorAll('.timeline-filter-btn').forEach(btn => {
+    const f = btn.getAttribute('data-filter');
+    if (f === agent) {
+      const color = agentColors[f] || 'purple';
+      btn.className = `timeline-filter-btn px-2 py-1 rounded text-xs font-medium bg-${color}-600/30 text-${color}-300 border border-${color}-500/30`;
+    } else {
+      btn.className = 'timeline-filter-btn px-2 py-1 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-white/5 hover:border-purple-500/20';
+    }
+  });
+  renderTimeline();
+}
+
+function renderPrdProgress() {
+  const container = document.getElementById('prd-progress');
+  const section = document.getElementById('prd-progress-section');
+  const prds = DATA.prdProgress;
+  if (!prds || Object.keys(prds).length === 0) { section.style.display = 'none'; return; }
+  section.style.display = '';
+
+  container.innerHTML = Object.entries(prds).map(([key, p]) => {
+    const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase());
+    const barColor = p.pct === 100 ? 'bg-green-500' : p.pct >= 60 ? 'bg-purple-500' : 'bg-blue-500';
+    const glowClass = p.pct === 100 ? 'glow-green' : '';
+    return `
+      <div class="mb-4 last:mb-0 ${glowClass}">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-sm font-medium text-white">${label}</span>
+          <span class="text-xs mono text-gray-400">${p.done}/${p.total} tasks — ${p.pct}%</span>
+        </div>
+        <div class="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
+          <div class="h-full rounded-full transition-all duration-500 ${barColor}" style="width: ${p.pct}%"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ============================================================
+// INIT + AUTO-REFRESH
+// ============================================================
+function toggleMobileMenu() {
+  const menu = document.getElementById('mobile-menu');
+  const openIcon = document.getElementById('hamburger-icon');
+  const closeIcon = document.getElementById('hamburger-close-icon');
+  const isOpen = menu.classList.contains('open');
+  menu.classList.toggle('open');
+  openIcon.classList.toggle('hidden', !isOpen);
+  closeIcon.classList.toggle('hidden', isOpen);
+}
+
+function renderAll(data) {
+  DATA = data;
+  const ts = `Updated: ${new Date(data.updated).toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, month: 'short', day: 'numeric' })}`;
+  document.getElementById('last-updated').textContent = ts;
+  const mobileTs = document.getElementById('last-updated-mobile');
+  if (mobileTs) mobileTs.textContent = ts;
+
+  renderAgentCards();
+  renderTrading();
+  renderTasks();
+  renderTimeline();
+  renderPrdProgress();
+}
+
+async function fetchAndRender() {
+  try {
+    const resp = await fetch('dashboard-state.json?t=' + Date.now());
+    if (resp.ok) {
+      const raw = await resp.json();
+      renderAll(sanitizeData(raw));
+    }
+  } catch (e) {
+    // Fall back to embedded DATA
+  }
+}
+
+// Initial render with embedded data
+renderAll(DATA);
+
+// Load live data then refresh every 60s
+fetchAndRender();
+setInterval(fetchAndRender, 60000);
+</script>
+</body>
+</html>
