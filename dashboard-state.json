@@ -1,5 +1,5 @@
 {
-  "updated": "2026-03-11T12:00:01.653666+00:00",
+  "updated": "2026-03-11T12:15:02.026484+00:00",
   "agents": [
     {
       "id": "obsidian",
@@ -10,8 +10,8 @@
       "emoji": "\ud83e\udde0",
       "model": "Claude Opus",
       "color": "purple",
-      "uptime": "62%",
-      "lastSeen": "2026-03-11T11:18:17.789445+00:00"
+      "uptime": "54%",
+      "lastSeen": "2026-03-11T12:03:03.831086+00:00"
     },
     {
       "id": "sentinel",
@@ -73,16 +73,16 @@
   "xMetrics": {
     "followers": 8,
     "following": 86,
-    "totalPosts": 79,
+    "totalPosts": 95,
     "totals": {
-      "likes": 7,
-      "replies": 5,
+      "likes": 5,
+      "replies": 3,
       "reposts": 0,
-      "impressions": 120,
+      "impressions": 124,
       "bookmarks": 0,
-      "engagement": 12
+      "engagement": 8
     },
-    "snapshotDate": "2026-03-10 23:43",
+    "snapshotDate": "2026-03-11 08:00",
     "engagementByType": {
       "value": {
         "count": 4,
@@ -116,7 +116,7 @@
   },
   "timeline": [
     {
-      "time": "12:00 PM",
+      "time": "12:15 PM",
       "agent": "obsidian",
       "action": "Dashboard data collected"
     }
