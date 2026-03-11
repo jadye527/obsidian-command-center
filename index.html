@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Obsidian Command Center — Agent Orchestration Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
+  body { font-family: 'Inter', sans-serif; background: #0a0a0f; color: #e2e8f0; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); backdrop-filter: blur(10px); }
+  .glow-purple { box-shadow: 0 0 20px rgba(139,92,246,0.15); }
+  .glow-green { box-shadow: 0 0 15px rgba(34,197,94,0.2); }
+  .glow-red { box-shadow: 0 0 15px rgba(239,68,68,0.2); }
+  .glow-yellow { box-shadow: 0 0 15px rgba(234,179,8,0.2); }
+  .pulse-green { animation: pulseGreen 2s ease-in-out infinite; }
+  .pulse-red { animation: pulseRed 1.5s ease-in-out infinite; }
+  @keyframes pulseGreen { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+  @keyframes pulseRed { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .kanban-col { min-height: 200px; }
+  .task-card { transition: transform 0.15s, box-shadow 0.15s; }
+  .task-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+  .agent-avatar { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .timeline-item::before { content: ''; position: absolute; left: 15px; top: 28px; bottom: -12px; width: 2px; background: rgba(139,92,246,0.2); }
+  .timeline-item:last-child::before { display: none; }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- Header -->
+<header class="border-b border-white/5 px-6 py-4">
+  <div class="max-w-7xl mx-auto flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-purple-600/20 flex items-center justify-center text-xl">
+        <svg class="w-6 h-6 text-purple-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
+      </div>
+      <div>
+        <h1 class="text-lg font-bold text-white">Obsidian Command Center</h1>
+        <p class="text-xs text-gray-500">JSJ Consulting — Agent Orchestration</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <span class="text-xs text-gray-500 mono" id="last-updated"></span>
+      <a href="https://x.com/ObsidianLabsAI" target="_blank" class="text-gray-400 hover:text-purple-400 text-sm">@ObsidianLabsAI</a>
+      <span class="px-2 py-1 rounded-md text-xs font-medium bg-purple-600/20 text-purple-300 border border-purple-500/20">Built by AI</span>
+    </div>
+  </div>
+</header>
+
+<!-- Agent Status Cards -->
+<section class="max-w-7xl mx-auto px-6 py-6">
+  <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Agent Fleet</h2>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="agent-cards"></div>
+</section>
+
+<!-- Cost Tracker -->
+<section class="max-w-7xl mx-auto px-6 py-4">
+  <div class="glass rounded-xl p-5 glow-purple">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Monthly Cost Tracker</h2>
+      <span class="mono text-2xl font-bold text-white" id="total-cost"></span>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="cost-breakdown"></div>
+    <div class="mt-4 pt-4 border-t border-white/5">
+      <div class="flex justify-between text-xs text-gray-500">
+        <span>Budget: $250/mo</span>
+        <span id="budget-pct"></span>
+      </div>
+      <div class="w-full h-2 bg-gray-800 rounded-full mt-1 overflow-hidden">
+        <div class="h-full rounded-full transition-all duration-500" id="budget-bar"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Task Board (Kanban) -->
+<section class="max-w-7xl mx-auto px-6 py-6">
+  <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Task Board</h2>
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="kanban-col">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="status-dot bg-gray-500"></span>
+        <span class="text-sm font-semibold text-gray-400">Backlog</span>
+        <span class="text-xs text-gray-600 mono" id="count-backlog"></span>
+      </div>
+      <div id="col-backlog" class="space-y-2"></div>
+    </div>
+    <div class="kanban-col">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="status-dot bg-blue-500"></span>
+        <span class="text-sm font-semibold text-blue-400">In Progress</span>
+        <span class="text-xs text-gray-600 mono" id="count-progress"></span>
+      </div>
+      <div id="col-progress" class="space-y-2"></div>
+    </div>
+    <div class="kanban-col">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="status-dot bg-yellow-500"></span>
+        <span class="text-sm font-semibold text-yellow-400">Review</span>
+        <span class="text-xs text-gray-600 mono" id="count-review"></span>
+      </div>
+      <div id="col-review" class="space-y-2"></div>
+    </div>
+    <div class="kanban-col">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="status-dot bg-green-500"></span>
+        <span class="text-sm font-semibold text-green-400">Done</span>
+        <span class="text-xs text-gray-600 mono" id="count-done"></span>
+      </div>
+      <div id="col-done" class="space-y-2"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Activity Timeline + Delegation -->
+<section class="max-w-7xl mx-auto px-6 py-6">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Timeline -->
+    <div>
+      <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Activity Feed</h2>
+      <div class="glass rounded-xl p-4 max-h-96 overflow-y-auto" id="timeline"></div>
+    </div>
+    <!-- Delegation Map -->
+    <div>
+      <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Delegation Map</h2>
+      <div class="glass rounded-xl p-4" id="delegation-map"></div>
+    </div>
+  </div>
+</section>
+
+<!-- System Health -->
+<section class="max-w-7xl mx-auto px-6 py-6 pb-12">
+  <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">System Health</h2>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="health-checks"></div>
+</section>
+
+<!-- Footer -->
+<footer class="border-t border-white/5 py-6 text-center">
+  <p class="text-xs text-gray-600">Obsidian Command Center v1.0 — JSJ Consulting</p>
+  <p class="text-xs text-gray-700 mt-1">
+    <a href="https://jadye527.github.io/obsidian-trading/" class="hover:text-purple-400">Trading Dashboard</a> ·
+    <a href="https://x.com/ObsidianLabsAI" class="hover:text-purple-400">@ObsidianLabsAI</a> ·
+    <a href="https://github.com/jadye527/obsidian-growth-kit" class="hover:text-purple-400">Growth Kit</a>
+  </p>
+</footer>
+
+<script>
+// ============================================================
+// DATA — Updated by cron or manually. Edit this section.
+// ============================================================
+const DATA = {
+  updated: "2026-03-10T21:46:00Z",
+
+  agents: [
+    {
+      id: "obsidian",
+      name: "Obsidian",
+      role: "CEO / Strategy",
+      emoji: "\u{1f9e0}",
+      status: "active",
+      model: "Claude Opus",
+      uptime: "99.2%",
+      tasksToday: 12,
+      lastAction: "Wrote Chapter 11, fixed Sentinel routing",
+      color: "purple"
+    },
+    {
+      id: "sentinel",
+      name: "Sentinel",
+      role: "Trading Ops",
+      emoji: "\u{1f6e1}\ufe0f",
+      status: "warning",
+      model: "Claude Sonnet",
+      uptime: "34%",
+      tasksToday: 0,
+      lastAction: "METAR daemon restarted — no active markets",
+      warning: "PERFORMANCE WARNING: 0 trades in 18 days. 27% win rate.",
+      color: "red"
+    },
+    {
+      id: "ralph",
+      name: "Ralph",
+      role: "Developer",
+      emoji: "\u{1f528}",
+      status: "active",
+      model: "Codex (GPT)",
+      uptime: "87%",
+      tasksToday: 6,
+      lastAction: "Task 6/18: Adding error handling to tools",
+      color: "green"
+    }
+  ],
+
+  costs: {
+    claudeMax: { label: "Claude Max", amount: 200, icon: "\u{1f9e0}" },
+    codex: { label: "Codex / ChatGPT", amount: 20, icon: "\u{1f528}" },
+    haiku: { label: "Haiku Crons", amount: 3.20, icon: "\u26a1" },
+    xApi: { label: "X API", amount: 5.00, icon: "\u{1f426}" }
+  },
+  budget: 250,
+
+  tasks: [
+    { id: 1, title: "Expand Growth Kit for businesses/creators", agent: "obsidian", status: "backlog", priority: "medium" },
+    { id: 2, title: "Add Stripe checkout to sales page", agent: "obsidian", status: "backlog", priority: "high" },
+    { id: 3, title: "Kalshi weather market integration", agent: "sentinel", status: "backlog", priority: "high" },
+    { id: 4, title: "Market research: X growth competitors", agent: "obsidian", status: "progress", priority: "high" },
+    { id: 5, title: "Agent dashboard v1", agent: "obsidian", status: "progress", priority: "high" },
+    { id: 6, title: "Add --help to all CLI tools", agent: "ralph", status: "progress", priority: "medium" },
+    { id: 7, title: "Error handling for xscout", agent: "ralph", status: "progress", priority: "medium" },
+    { id: 8, title: "Dashboard deploy to GitHub Pages", agent: "obsidian", status: "review", priority: "high" },
+    { id: 9, title: "Fix Sentinel Telegram routing", agent: "obsidian", status: "done", priority: "critical" },
+    { id: 10, title: "Chapter 11: AI Ops Stack", agent: "obsidian", status: "done", priority: "high" },
+    { id: 11, title: "Growth Kit guide v1", agent: "obsidian", status: "done", priority: "high" },
+    { id: 12, title: "Trading dashboard on GitHub Pages", agent: "obsidian", status: "done", priority: "high" },
+    { id: 13, title: "xpost --help", agent: "ralph", status: "done", priority: "low" },
+    { id: 14, title: "xqueue --help", agent: "ralph", status: "done", priority: "low" },
+    { id: 15, title: "Sentinel performance warning", agent: "obsidian", status: "done", priority: "critical" },
+  ],
+
+  timeline: [
+    { time: "5:46 PM", agent: "obsidian", action: "Chapter 11 committed & pushed to Growth Kit repo" },
+    { time: "5:35 PM", agent: "obsidian", action: "Sentinel HEARTBEAT.md written — autonomous self-improvement enabled" },
+    { time: "5:30 PM", agent: "obsidian", action: "Performance warning issued to Sentinel" },
+    { time: "5:28 PM", agent: "obsidian", action: "Telegram routing fixed in 4 files — all alerts now go to group topic" },
+    { time: "5:24 PM", agent: "obsidian", action: "Replied to 4 X mentions (weather alpha, P&L, METAR, shipping)" },
+    { time: "5:20 PM", agent: "ralph", action: "Completed xanalytics --help (task 3/18)" },
+    { time: "5:15 PM", agent: "ralph", action: "Completed xqueue --help (task 2/18)" },
+    { time: "4:30 PM", agent: "ralph", action: "Started PRD task loop — 18 tasks queued" },
+    { time: "9:25 AM", agent: "obsidian", action: "Morning X routine: queued 5 posts, analyzed metrics" },
+    { time: "9:00 AM", agent: "sentinel", action: "METAR daemon running — collecting data (no active markets)" },
+  ],
+
+  delegations: [
+    { from: "obsidian", to: "ralph", task: "Growth Kit code improvements (18 tasks)", status: "active" },
+    { from: "obsidian", to: "sentinel", task: "Daily market scanning & trade execution", status: "warning" },
+    { from: "obsidian", to: "sentinel", task: "METAR data collection (24/7)", status: "active" },
+    { from: "jason", to: "obsidian", task: "Build agent dashboard", status: "active" },
+    { from: "jason", to: "obsidian", task: "Market research & product positioning", status: "active" },
+  ],
+
+  health: [
+    { name: "METAR Daemon", status: "healthy", detail: "PID active, collecting data" },
+    { name: "5-Min Monitor", status: "healthy", detail: "Running, no alerts" },
+    { name: "Tweet Drip", status: "healthy", detail: "4 posts queued" },
+    { name: "Ralph (tmux)", status: "healthy", detail: "Task 6/18, responsive" },
+    { name: "Scanner Cron", status: "error", detail: "Not running — no weather markets" },
+    { name: "QMD Index", status: "warning", detail: "5 pending embeddings" },
+    { name: "X API", status: "healthy", detail: "Rate limits OK" },
+    { name: "Polymarket", status: "error", detail: "0 weather markets available" },
+  ]
+};
+
+// ============================================================
+// RENDER FUNCTIONS
+// ============================================================
+
+function renderAgentCards() {
+  const container = document.getElementById('agent-cards');
+  container.innerHTML = DATA.agents.map(a => {
+    const statusColors = {
+      active: 'bg-green-500 pulse-green',
+      warning: 'bg-yellow-500 pulse-red',
+      error: 'bg-red-500 pulse-red',
+      offline: 'bg-gray-600'
+    };
+    const borderColors = { active: 'border-green-500/20', warning: 'border-yellow-500/20', error: 'border-red-500/20', offline: 'border-gray-700' };
+    const glowClass = { active: 'glow-green', warning: 'glow-yellow', error: 'glow-red', offline: '' };
+
+    return `
+      <div class="glass rounded-xl p-5 ${glowClass[a.status]} border ${borderColors[a.status]}">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <div class="agent-avatar bg-${a.color}-600/20">${a.emoji}</div>
+            <div>
+              <h3 class="font-bold text-white">${a.name}</h3>
+              <p class="text-xs text-gray-500">${a.role}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="status-dot ${statusColors[a.status]}"></span>
+            <span class="text-xs text-gray-400 capitalize">${a.status}</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center mb-3">
+          <div><p class="text-lg font-bold text-white mono">${a.tasksToday}</p><p class="text-xs text-gray-500">Tasks Today</p></div>
+          <div><p class="text-lg font-bold text-white mono">${a.uptime}</p><p class="text-xs text-gray-500">Uptime</p></div>
+          <div><p class="text-xs text-gray-400 mono mt-1">${a.model}</p><p class="text-xs text-gray-500">Model</p></div>
+        </div>
+        <p class="text-xs text-gray-400 border-t border-white/5 pt-2">${a.lastAction}</p>
+        ${a.warning ? `<p class="text-xs text-red-400 mt-2 font-medium">\u26a0\ufe0f ${a.warning}</p>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderCosts() {
+  const container = document.getElementById('cost-breakdown');
+  const total = Object.values(DATA.costs).reduce((s, c) => s + c.amount, 0);
+  document.getElementById('total-cost').textContent = `$${total.toFixed(2)}`;
+
+  container.innerHTML = Object.values(DATA.costs).map(c => `
+    <div class="text-center">
+      <p class="text-lg">${c.icon}</p>
+      <p class="mono font-bold text-white">$${c.amount.toFixed(2)}</p>
+      <p class="text-xs text-gray-500">${c.label}</p>
+    </div>
+  `).join('');
+
+  const pct = (total / DATA.budget * 100).toFixed(0);
+  document.getElementById('budget-pct').textContent = `${pct}% of budget`;
+  const bar = document.getElementById('budget-bar');
+  bar.style.width = `${Math.min(pct, 100)}%`;
+  bar.className = `h-full rounded-full transition-all duration-500 ${pct > 90 ? 'bg-red-500' : pct > 70 ? 'bg-yellow-500' : 'bg-green-500'}`;
+}
+
+function renderTasks() {
+  const cols = { backlog: 'col-backlog', progress: 'col-progress', review: 'col-review', done: 'col-done' };
+  const counts = { backlog: 0, progress: 0, review: 0, done: 0 };
+  const priorityColors = { critical: 'border-l-red-500', high: 'border-l-purple-500', medium: 'border-l-blue-500', low: 'border-l-gray-500' };
+  const agentEmoji = {};
+  DATA.agents.forEach(a => agentEmoji[a.id] = a.emoji);
+
+  Object.values(cols).forEach(id => document.getElementById(id).innerHTML = '');
+
+  DATA.tasks.forEach(t => {
+    counts[t.status]++;
+    const el = document.getElementById(cols[t.status]);
+    if (!el) return;
+    el.innerHTML += `
+      <div class="task-card glass rounded-lg p-3 border-l-2 ${priorityColors[t.priority]}">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-white">${t.title}</span>
+          <span class="text-sm" title="${t.agent}">${agentEmoji[t.agent] || '\u{1f464}'}</span>
+        </div>
+        <div class="flex items-center justify-between mt-1">
+          <span class="text-xs text-gray-500">${t.agent}</span>
+          <span class="text-xs px-1.5 py-0.5 rounded ${t.priority === 'critical' ? 'bg-red-500/20 text-red-300' : t.priority === 'high' ? 'bg-purple-500/20 text-purple-300' : 'bg-gray-700 text-gray-400'}">${t.priority}</span>
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById('count-backlog').textContent = counts.backlog;
+  document.getElementById('count-progress').textContent = counts.progress;
+  document.getElementById('count-review').textContent = counts.review;
+  document.getElementById('count-done').textContent = counts.done;
+}
+
+function renderTimeline() {
+  const container = document.getElementById('timeline');
+  const agentEmoji = {};
+  DATA.agents.forEach(a => agentEmoji[a.id] = a.emoji);
+
+  container.innerHTML = DATA.timeline.map(t => `
+    <div class="timeline-item relative pl-10 pb-4">
+      <div class="absolute left-0 top-1 w-8 h-8 rounded-lg bg-purple-600/10 flex items-center justify-center text-sm">
+        ${agentEmoji[t.agent] || '\u{1f464}'}
+      </div>
+      <p class="text-sm text-white">${t.action}</p>
+      <p class="text-xs text-gray-500 mono mt-0.5">${t.time} — ${t.agent}</p>
+    </div>
+  `).join('');
+}
+
+function renderDelegations() {
+  const container = document.getElementById('delegation-map');
+  const statusBadge = {
+    active: '<span class="px-1.5 py-0.5 rounded text-xs bg-green-500/20 text-green-300">Active</span>',
+    warning: '<span class="px-1.5 py-0.5 rounded text-xs bg-yellow-500/20 text-yellow-300">Warning</span>',
+    done: '<span class="px-1.5 py-0.5 rounded text-xs bg-gray-700 text-gray-400">Done</span>'
+  };
+  const names = { obsidian: '\u{1f9e0} Obsidian', sentinel: '\u{1f6e1}\ufe0f Sentinel', ralph: '\u{1f528} Ralph', jason: '\u{1f468}\u200d\u{1f4bc} Jason' };
+
+  container.innerHTML = DATA.delegations.map(d => `
+    <div class="flex items-center gap-3 py-3 border-b border-white/5 last:border-0">
+      <span class="text-sm text-gray-400 w-28">${names[d.from] || d.from}</span>
+      <svg class="w-4 h-4 text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+      <span class="text-sm text-gray-400 w-28">${names[d.to] || d.to}</span>
+      <span class="text-sm text-white flex-1">${d.task}</span>
+      ${statusBadge[d.status] || ''}
+    </div>
+  `).join('');
+}
+
+function renderHealth() {
+  const container = document.getElementById('health-checks');
+  const statusConfig = {
+    healthy: { dot: 'bg-green-500', bg: 'border-green-500/10', text: 'text-green-400' },
+    warning: { dot: 'bg-yellow-500', bg: 'border-yellow-500/10', text: 'text-yellow-400' },
+    error: { dot: 'bg-red-500 pulse-red', bg: 'border-red-500/10', text: 'text-red-400' }
+  };
+
+  container.innerHTML = DATA.health.map(h => {
+    const cfg = statusConfig[h.status];
+    return `
+      <div class="glass rounded-lg p-3 border ${cfg.bg}">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="status-dot ${cfg.dot}"></span>
+          <span class="text-sm font-medium text-white">${h.name}</span>
+        </div>
+        <p class="text-xs ${cfg.text}">${h.detail}</p>
+      </div>
+    `;
+  }).join('');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  document.getElementById('last-updated').textContent =
+    `Updated: ${new Date(DATA.updated).toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, month: 'short', day: 'numeric' })}`;
+  renderAgentCards();
+  renderCosts();
+  renderTasks();
+  renderTimeline();
+  renderDelegations();
+  renderHealth();
+}
+
+init();
+</script>
+</body>
+</html>
