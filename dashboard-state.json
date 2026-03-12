@@ -1,5 +1,5 @@
 {
-  "updated": "2026-03-12T12:00:01.056196+00:00",
+  "updated": "2026-03-12T12:15:00.919858+00:00",
   "agents": [
     {
       "id": "obsidian",
@@ -72,17 +72,17 @@
   },
   "xMetrics": {
     "followers": 11,
-    "following": 86,
-    "totalPosts": 115,
+    "following": 85,
+    "totalPosts": 120,
     "totals": {
-      "likes": 6,
-      "replies": 4,
+      "likes": 9,
+      "replies": 3,
       "reposts": 0,
-      "impressions": 413,
+      "impressions": 2040,
       "bookmarks": 0,
-      "engagement": 10
+      "engagement": 12
     },
-    "snapshotDate": "2026-03-11 21:47",
+    "snapshotDate": "2026-03-12 08:10",
     "engagementByType": {
       "reply": {
         "count": 5,
