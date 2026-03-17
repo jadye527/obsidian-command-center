@@ -1,5 +1,5 @@
 {
-  "updated": "2026-03-17T01:45:01.534267+00:00",
+  "updated": "2026-03-17T02:00:01.866996+00:00",
   "agents": [
     {
       "id": "obsidian",
@@ -10,8 +10,8 @@
       "emoji": "\ud83e\udde0",
       "model": "Claude Opus",
       "color": "purple",
-      "uptime": "71%",
-      "lastSeen": "2026-03-17T01:31:02.155650+00:00"
+      "uptime": "67%",
+      "lastSeen": "2026-03-17T01:52:17.583629+00:00"
     },
     {
       "id": "sentinel",
@@ -23,7 +23,7 @@
       "model": "Claude Sonnet",
       "color": "red",
       "uptime": "12%",
-      "lastSeen": "2026-03-17T00:54:07.720780+00:00"
+      "lastSeen": "2026-03-17T01:54:08.429780+00:00"
     },
     {
       "id": "ralph",
