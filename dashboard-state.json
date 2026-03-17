@@ -1,5 +1,5 @@
 {
-  "updated": "2026-03-17T16:00:01.302436+00:00",
+  "updated": "2026-03-17T16:15:01.661291+00:00",
   "agents": [
     {
       "id": "obsidian",
@@ -11,7 +11,7 @@
       "model": "Claude Opus",
       "color": "purple",
       "uptime": "62%",
-      "lastSeen": "2026-03-17T15:58:19.520105+00:00"
+      "lastSeen": "2026-03-17T16:05:24.589271+00:00"
     },
     {
       "id": "sentinel",
@@ -73,16 +73,16 @@
   "xMetrics": {
     "followers": 15,
     "following": 87,
-    "totalPosts": 207,
+    "totalPosts": 223,
     "totals": {
-      "likes": 4,
-      "replies": 5,
-      "reposts": 2,
-      "impressions": 134,
+      "likes": 7,
+      "replies": 7,
+      "reposts": 0,
+      "impressions": 157,
       "bookmarks": 0,
-      "engagement": 11
+      "engagement": 14
     },
-    "snapshotDate": "2026-03-17 08:03",
+    "snapshotDate": "2026-03-17 12:00",
     "engagementByType": {
       "reply": {
         "count": 5,
