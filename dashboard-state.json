@@ -1,5 +1,5 @@
 {
-  "updated": "2026-03-19T10:45:01.274151+00:00",
+  "updated": "2026-03-19T15:15:01.847558+00:00",
   "agents": [
     {
       "id": "obsidian",
@@ -10,8 +10,8 @@
       "emoji": "\ud83e\udde0",
       "model": "Claude Opus",
       "color": "purple",
-      "uptime": "38%",
-      "lastSeen": "2026-03-19T10:43:10.525199+00:00"
+      "uptime": "33%",
+      "lastSeen": "2026-03-19T15:14:19.771465+00:00"
     },
     {
       "id": "sentinel",
@@ -23,7 +23,7 @@
       "model": "Claude Sonnet",
       "color": "red",
       "uptime": "8%",
-      "lastSeen": "2026-03-19T10:44:55.446933+00:00"
+      "lastSeen": "2026-03-19T15:14:38.747454+00:00"
     },
     {
       "id": "ralph",
@@ -71,18 +71,18 @@
     "lastTrade": "unknown"
   },
   "xMetrics": {
-    "followers": 16,
+    "followers": 17,
     "following": 88,
-    "totalPosts": 287,
+    "totalPosts": 290,
     "totals": {
-      "likes": 4,
-      "replies": 10,
+      "likes": 6,
+      "replies": 9,
       "reposts": 0,
-      "impressions": 200,
+      "impressions": 267,
       "bookmarks": 0,
-      "engagement": 14
+      "engagement": 15
     },
-    "snapshotDate": "2026-03-18 21:47",
+    "snapshotDate": "2026-03-19 11:13",
     "engagementByType": {
       "general": {
         "count": 6,
