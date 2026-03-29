@@ -1,5 +1,5 @@
 {
-  "updated": "2026-03-29T13:00:01.846134+00:00",
+  "updated": "2026-03-29T13:15:02.009153+00:00",
   "agents": [
     {
       "id": "obsidian",
@@ -11,7 +11,7 @@
       "model": "Claude Opus",
       "color": "purple",
       "uptime": "8%",
-      "lastSeen": "2026-03-29T12:08:19.893862+00:00"
+      "lastSeen": "2026-03-29T13:04:40.758039+00:00"
     },
     {
       "id": "sentinel",
@@ -23,7 +23,7 @@
       "model": "Claude Sonnet",
       "color": "red",
       "uptime": "8%",
-      "lastSeen": "2026-03-29T11:06:50.934648+00:00"
+      "lastSeen": "2026-03-29T13:06:50.527160+00:00"
     },
     {
       "id": "ralph",
