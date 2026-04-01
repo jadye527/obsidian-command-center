@@ -1,5 +1,5 @@
 {
-  "updated": "2026-04-01T02:30:01.978541+00:00",
+  "updated": "2026-04-01T02:45:01.319975+00:00",
   "agents": [
     {
       "id": "obsidian",
@@ -22,7 +22,7 @@
       "emoji": "\ud83d\udee1\ufe0f",
       "model": "Claude Sonnet",
       "color": "red",
-      "uptime": "46%",
+      "uptime": "42%",
       "lastSeen": "2026-04-01T01:21:58.155775+00:00"
     },
     {
