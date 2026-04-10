@@ -1,5 +1,5 @@
 {
-  "updated": "2026-04-10T09:30:01.098906+00:00",
+  "updated": "2026-04-10T09:45:01.317141+00:00",
   "agents": [
     {
       "id": "obsidian",
@@ -10,7 +10,7 @@
       "emoji": "\ud83e\udde0",
       "model": "Claude Opus",
       "color": "purple",
-      "uptime": "96%",
+      "uptime": "100%",
       "lastSeen": "2026-04-10T09:16:49.413821+00:00"
     },
     {
